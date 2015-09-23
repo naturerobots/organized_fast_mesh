@@ -3,10 +3,13 @@
 OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(pcl::PointCloud<pcl::PointXYZ>& organized_scan)
   : organized_scan(organized_scan)
 {
-
+  setEdgeThreshold(0.5);
 }
 
 void OrganizedFastMeshGenerator::getMesh(lvr::BaseMesh<lvr::ColorVertex<float, int>, lvr::Normal<float> >& mesh){
+
+  // clear the vertices vector
+  vertices.clear();
 
   uint32_t width = organized_scan.width;
   uint32_t height = organized_scan.height;
@@ -15,34 +18,47 @@ void OrganizedFastMeshGenerator::getMesh(lvr::BaseMesh<lvr::ColorVertex<float, i
   int index = 0;
   int index_cnt = 0;
   std::map<int, int> index_map;
+
+
+  // add all vertices and normals to the mesh
+  // also create an index map for the triangle creation
   for(uint32_t x=0; x<width; x++){
     for(uint32_t y=0; y<height; y++){
-      lvr::ColorVertex<float, int> point, left, top, right, bottom;
-     // ROS_INFO("create vertex for (%d, %d)", x, y);
+      lvr::ColorVertex<float, int> point; // point at (x,y)
+      // get the point at (x,y)
       pcl::PointXYZ p_pcl = organized_scan(x, y);
-
       pclToLvr(p_pcl, point);
-     // ROS_INFO("to lvr");
-      //ROS_INFO("Point(%d, %d): (%f, %f, %f)", x, y, p_pcl.x, p_pcl.y, p_pcl.z);
       if(!pointExists(point)){
-        //ROS_INFO("Point(%d, %d): nan", x, y);
+        // index maps to -1
         index_map[index++] = -1;
-      }else{
-       // ROS_INFO("is not nan");
+      }else{ // if the point exists (not nan)
+        // index maps to existing vertex in the mesh
         index_map[index++] = index_cnt++;
         mesh.addVertex(point);
+        vertices.push_back(point);
+
+        lvr::ColorVertex<float, int>
+          left,         // point at (x-1, y)
+          top,          // point at (x, y-1)
+          right,        // point at (x+1, y)
+          bottom,       // point at (x, y+1)
+          bottom_right; // ponit at (x+1, y+1)
         
-        // calc normal
+        // get indices around the borders for a 360 degree view
         uint32_t x_left = (x == 0) ? width-1 : x-1;
         uint32_t x_right = (x == width-1) ? 0 : x+1;
         uint32_t y_top = (y == 0) ? height-1 : y-1;
         uint32_t y_bottom = (y == height-1) ? 0 : y+1;
 
+        // convert points to lvr
         pclToLvr(organized_scan(x_left, y), left);
         pclToLvr(organized_scan(x, y_top), top);
         pclToLvr(organized_scan(x_right, y), right);
         pclToLvr(organized_scan(x, y_bottom), bottom);
+        pclToLvr(organized_scan(x_right, y_bottom), bottom_right);
 
+        // calculate normals of the surrounding faces
+        // and finally the vertex normal
         std::vector<lvr::Normal<float> > normals;
         std::vector<lvr::ColorVertex<float, int> >normal_vertices;
         normal_vertices.push_back(left);
@@ -62,10 +78,14 @@ void OrganizedFastMeshGenerator::getMesh(lvr::BaseMesh<lvr::ColorVertex<float, i
             normals.push_back(lvr::Normal<float>(ab.cross(ac)));
           }
         }
+        // if there are no surrounding faces and therefore no normals
+        // take the null_vertex to point vector as normal
         if(normals.size() < 1){
           lvr::ColorVertex<float, int> null_vertex(0,0,0);
           mesh.addNormal(lvr::Normal<float>(point-null_vertex));
-        }else{
+        }
+        // otherwise combine all normals to one vertex normal
+        else{
           lvr::Normal<float> normal(normals.front());
           std::vector<lvr::Normal<float> >::iterator n_it;
           for(n_it = normals.begin()+1; n_it!=normals.end(); n_it++){
@@ -78,31 +98,98 @@ void OrganizedFastMeshGenerator::getMesh(lvr::BaseMesh<lvr::ColorVertex<float, i
     }
   }
 
-  ROS_INFO("start adding faces...");
+  bool first_in_scan;
+  std::vector<int> first_scan_line;
+
+  for(uint32_t y=0; y<height; y++){
+    first_in_scan = true;
+    for(uint32_t x=width-1; x>0; x--){
+      if(index_map[toIndex(x, y)] != -1){
+        if(first_in_scan){
+        first_in_scan = false;
+        first_scan_line.push_back(toIndex(x,y));
+        }
+      }
+    }
+  }
+
+
+  ROS_INFO("List length: %d", first_scan_line.size());
+  lvr::ColorVertex<float, int> center;
+  center.x = center.y = center.z = 0;
+  for(std::vector<int>::iterator iter = first_scan_line.begin(); iter != first_scan_line.end(); ++iter)
+  {
+    center += vertices[index_map[*iter]];
+  }
+  center /= first_scan_line.size();
+  mesh.addVertex(center);
+  mesh.addNormal(lvr::Normal<float>(0,0,1));
+  vertices.push_back(center);
+  index_map[index++] = index_cnt++;
+  int center_id = index - 1;
+  int previous_id = first_scan_line.back();
+  for(std::vector<int>::iterator iter = first_scan_line.begin(); iter != first_scan_line.end(); ++iter)
+  {
+    mesh.addTriangle(index_map[center_id], index_map[previous_id], index_map[*iter]);
+    previous_id = *iter;
+  }
+  
+
+  // start adding faces to the mesh
   for(uint32_t x=0; x<width; x++){
     for(uint32_t y=0; y<height; y++){
+      // get indices around the borders for a 360 degree view
       uint32_t x_right = (x == width-1) ? 0 : x+1;
       uint32_t y_bottom = (y == height-1) ? 0 : y+1;
       
+      // get the corresponding indices in the mesh
       int idx =    index_map[toIndex(x, y)];
       int idx_r =  index_map[toIndex(x_right, y)];
       int idx_rb = index_map[toIndex(x_right, y_bottom)];
       int idx_b =  index_map[toIndex(x, y_bottom)];
 
-      //ROS_INFO("Indixes: Index:%d, idy:%d, idx_r:%d, idx_rb:%d, idx_b:%d",i, idx, idx_r, idx_rb, idx_b);
+      //     top              bottom
+      //   triangle          triangle
+      //    .___.             .   .
+      //     \  |             |\
+      //      \ |             | \
+      //       \|             |  \
+      //    .   .             .___.
+      // 
+      
+      // create top triangle if all vertices exists
       if(idx != -1  && idx_rb != -1 && idx_r != -1){
-        mesh.addTriangle(idx, idx_rb, idx_r);
+        // check if there are longer edges then the threshold
+        if(!hasLongEdge(idx, idx_rb, idx_r, sqr_edge_threshold))
+          mesh.addTriangle(idx, idx_rb, idx_r);
       }
-
+      // create bottom triangle if all vertices exists
       if(idx != -1 && idx_b != -1 && idx_rb != -1){
-        mesh.addTriangle(idx, idx_b, idx_rb);
+        // check if there are longer edges then the threshold
+        if(!hasLongEdge(idx, idx_b, idx_rb, sqr_edge_threshold))
+          mesh.addTriangle(idx, idx_b, idx_rb);
       }
     }
   }
+  // finalize the mesh for the MeshBufferPointer
   mesh.finalize();
 }
 
-void OrganizedFastMeshGenerator::pclToLvr(pcl::PointXYZ& in, lvr::ColorVertex<float, int>& out){
+void OrganizedFastMeshGenerator::setEdgeThreshold(float dist){
+  sqr_edge_threshold = dist * dist;
+}
+
+bool OrganizedFastMeshGenerator::hasLongEdge(int a, int b, int c, float sqr_edge_threshold){
+  lvr::ColorVertex<float, int> v_a = vertices[a];
+  lvr::ColorVertex<float, int> v_b = vertices[b];
+  lvr::ColorVertex<float, int> v_c = vertices[c];
+  if(v_a.sqrDistance(v_b) > sqr_edge_threshold) return true;
+  if(v_b.sqrDistance(v_c) > sqr_edge_threshold) return true;
+  if(v_c.sqrDistance(v_a) > sqr_edge_threshold) return true;
+  return false;
+}
+
+inline void OrganizedFastMeshGenerator::pclToLvr(pcl::PointXYZ& in, lvr::ColorVertex<float, int>& out){
   out.x = in.x;
   out.y = in.y;
   out.z = in.z;
@@ -111,13 +198,6 @@ void OrganizedFastMeshGenerator::pclToLvr(pcl::PointXYZ& in, lvr::ColorVertex<fl
 uint32_t OrganizedFastMeshGenerator::toIndex(uint32_t x, uint32_t y){
   uint32_t height = organized_scan.height;
   return x*height+y;
-}
-
-void OrganizedFastMeshGenerator::fromIndex(uint32_t index, uint32_t& x, uint32_t&y){
-  uint32_t height = organized_scan.height;
-  uint32_t width = organized_scan.width;
-  y = (int)index%(int)width;
-  x = (int)index/(int)width;
 }
 
 bool OrganizedFastMeshGenerator::pointExists(lvr::ColorVertex<float, int>& vertex){
