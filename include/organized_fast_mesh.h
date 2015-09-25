@@ -4,12 +4,9 @@
 #include "organized_fast_mesh_generator.h"
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <visualization_msgs/Marker.h>
 #include <mesh_msgs/TriangleMeshStamped.h>
 #include <lvr_ros/lvr_ros_conversions.h>
-
 #include <geometry/HalfEdgeMesh.hpp>
-#include <path_planning/GraphHalfEdgeMesh.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -18,7 +15,6 @@
 
 typedef lvr::ColorVertex<float, int> VertexType;
 typedef lvr::Normal<float> NormalType;
-typedef unsigned char uchar;
 
 class OrganizedFastMesh{
 
