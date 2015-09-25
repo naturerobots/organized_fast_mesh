@@ -14,8 +14,6 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>pcl_ros</build_depend>
   <build_depend>std_msgs</build_depend>
-  <build_depend>lvr</build_depend>
-  <build_depend>shap_msgs</build_depend>
   <build_depend>lvr_ros</build_depend>
   <build_depend>mesh_msgs</build_depend>
 
@@ -23,8 +21,6 @@
   <run_depend>sensor_msgs</run_depend>
   <run_depend>pcl_ros</run_depend>
   <run_depend>std_msgs</run_depend>
-  <run_depend>lvr</run_depend>
-  <run_depend>shape_msgs</run_depend>
   <run_depend>lvr_ros</run_depend>
   <run_depend>mesh_msgs</run_depend>
 

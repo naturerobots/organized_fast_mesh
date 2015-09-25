@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   sensor_msgs
-  shape_msgs
   mesh_msgs
   lvr_ros
 )
@@ -18,12 +17,10 @@ find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(CGAL REQUIRED)
 
-
 add_definitions("-frounding-math")
 add_definitions("-std=c++0x")
 add_definitions(${PCL_DEFINITIONS})
 add_definitions(-D_USE_PCL_)
-
 
 FIND_PATH(OPENGL_INC gl.h /usr/include/GL)
 include_directories(${OPENGL_INC})
@@ -86,7 +83,7 @@ generate_messages(
   DEPENDENCIES
   std_msgs
   sensor_msgs
-  shape_msgs
+  mesh_msgs
 )
 
 catkin_package(
