@@ -1,4 +1,49 @@
+/*
+ *  Software License Agreement (BSD License)
+ *
+ *  Robot Operating System code by the University of Osnabrück
+ *  Copyright (c) 2015, University of Osnabrück
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   1. Redistributions of source code must retain the above 
+ *      copyright notice, this list of conditions and the following
+ *      disclaimer.
+ *
+ *   2. Redistributions in binary form must reproduce the above 
+ *      copyright notice, this list of conditions and the following
+ *      disclaimer in the documentation and/or other materials provided
+ *      with the distribution.
+ *
+ *   3. Neither the name of the copyright holder nor the names of its
+ *      contributors may be used to endorse or promote products derived
+ *      from this software without specific prior written permission.
+ *
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ *  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ *  PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ *  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ *  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ *  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ *  OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+ *  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *
+ *
+ *  organized_fast_mesh_generator.cpp
+ *
+ *  author: Sebastian Pütz <spuetz@uni-osnabrueck.de>
+ */
+
 #include <organized_fast_mesh_generator.h>
+#include <boost/math/special_functions/fpclassify.hpp>
 
 OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(pcl::PointCloud<pcl::PointXYZ>& organized_scan)
   : organized_scan(organized_scan)
@@ -14,7 +59,6 @@ void OrganizedFastMeshGenerator::getMesh(lvr::BaseMesh<lvr::ColorVertex<float, i
   uint32_t width = organized_scan.width;
   uint32_t height = organized_scan.height;
 
-  ROS_INFO("start building organized mesh width: %d, height: %d", width, height);
   int index = 0;
   int index_cnt = 0;
   std::map<int, int> index_map;
@@ -103,18 +147,14 @@ void OrganizedFastMeshGenerator::getMesh(lvr::BaseMesh<lvr::ColorVertex<float, i
 
   for(uint32_t y=0; y<height; y++){
     first_in_scan = true;
-    for(uint32_t x=width-1; x>0; x--){
+    for(uint32_t x=width-1; x > 0 && first_in_scan; x--){
       if(index_map[toIndex(x, y)] != -1){
-        if(first_in_scan){
         first_in_scan = false;
         first_scan_line.push_back(toIndex(x,y));
-        }
       }
     }
   }
 
-
-  ROS_INFO("List length: %d", first_scan_line.size());
   lvr::ColorVertex<float, int> center;
   center.x = center.y = center.z = 0;
   for(std::vector<int>::iterator iter = first_scan_line.begin(); iter != first_scan_line.end(); ++iter)
@@ -179,7 +219,7 @@ void OrganizedFastMeshGenerator::setEdgeThreshold(float dist){
   sqr_edge_threshold = dist * dist;
 }
 
-bool OrganizedFastMeshGenerator::hasLongEdge(int a, int b, int c, float sqr_edge_threshold){
+inline bool OrganizedFastMeshGenerator::hasLongEdge(int a, int b, int c, float sqr_edge_threshold){
   lvr::ColorVertex<float, int> v_a = vertices[a];
   lvr::ColorVertex<float, int> v_b = vertices[b];
   lvr::ColorVertex<float, int> v_c = vertices[c];
@@ -195,11 +235,11 @@ inline void OrganizedFastMeshGenerator::pclToLvr(pcl::PointXYZ& in, lvr::ColorVe
   out.z = in.z;
 }
 
-uint32_t OrganizedFastMeshGenerator::toIndex(uint32_t x, uint32_t y){
+inline uint32_t OrganizedFastMeshGenerator::toIndex(uint32_t x, uint32_t y){
   uint32_t height = organized_scan.height;
   return x*height+y;
 }
 
-bool OrganizedFastMeshGenerator::pointExists(lvr::ColorVertex<float, int>& vertex){
+inline bool OrganizedFastMeshGenerator::pointExists(lvr::ColorVertex<float, int>& vertex){
   return !boost::math::isnan<float>(vertex.x) && !boost::math::isnan<float>(vertex.y) && !boost::math::isnan<float>(vertex.z);
 }
