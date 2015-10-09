@@ -108,5 +108,6 @@ void OrganizedFastMesh::pointCloud2Callback(const sensor_msgs::PointCloud2::Cons
 int main(int args, char** argv){
   ros::init(args, argv, "organized_fast_mesh");
   ros::NodeHandle nh;
+  OrganizedFastMesh ofm(nh);
   ros::spin();
 }
