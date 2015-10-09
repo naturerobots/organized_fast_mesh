@@ -57,7 +57,6 @@ endforeach()
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${lvr_ros_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${OPENGL_INCLUDE_DIRS}
   ${CGAL_INCLUDE_DIRS}
