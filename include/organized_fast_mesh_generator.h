@@ -45,10 +45,10 @@
 
 #ifndef ORGANIZED_FAST_MESH_GENERATOR_H_
 #define ORGANIZED_FAST_MESH_GENERATOR_H_
-#include <reconstruction/MeshGenerator.hpp>
-#include <geometry/BaseMesh.hpp>
-#include <geometry/ColorVertex.hpp>
-#include <geometry/Normal.hpp>
+#include <lvr/reconstruction/MeshGenerator.hpp>
+#include <lvr/geometry/BaseMesh.hpp>
+#include <lvr/geometry/ColorVertex.hpp>
+#include <lvr/geometry/Normal.hpp>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 

@@ -47,7 +47,7 @@
 #include "organized_fast_mesh_generator.h"
 #include <mesh_msgs/TriangleMeshStamped.h>
 #include <lvr_ros/lvr_ros_conversions.h>
-#include <geometry/HalfEdgeMesh.hpp>
+#include <lvr/geometry/HalfEdgeMesh.hpp>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/PCLPointCloud2.h>
