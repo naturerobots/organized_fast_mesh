@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <launch>
-  <node name="organized_fast_mesh" pkg="organized_fast_mesh" type="organized_fast_mesh" launch-prefix="xterm -e gdb --args"
-  output="screen" >
+  <node name="organized_fast_mesh" pkg="organized_fast_mesh" type="organized_fast_mesh" output="screen" >
     <remap from="input_cloud" to="assembled_cloud" />
+    <param name="edge_threshold" value="0.5"/>
+    <param name="fillup_base_hole" value="true"/>
   </node>
 </launch>
