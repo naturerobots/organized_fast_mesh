@@ -67,6 +67,9 @@ class OrganizedFastMesh{
       const sensor_msgs::PointCloud2& cloud,
       mesh_msgs::TriangleMeshStamped& mesh_msg);
 
+    double edge_threshold;
+    bool fillup_base_hole;
+
 };
 
 #endif /* organized_fast_mesh.h */

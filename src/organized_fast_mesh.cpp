@@ -63,6 +63,11 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
   cloud_sub_ = nh_.subscribe("input_cloud", 20, &OrganizedFastMesh::pointCloud2Callback, this);
   mesh_pub_ = nh_.advertise<mesh_msgs::TriangleMeshStamped>("organized_mesh", 1);
   service_ = nh_.advertiseService("organized_fast_mesh", &OrganizedFastMesh::generateOrganizedFastMeshSrv, this);
+
+  ros::NodeHandle p_nh_("~");
+  p_nh_.param("edge_threshold", edge_threshold, 0.5);
+  p_nh_.param("fillup_base_hole", fillup_base_hole, false);
+
 }
 bool OrganizedFastMesh::generateOrganizedFastMesh(
   const sensor_msgs::PointCloud2& cloud,
@@ -74,16 +79,56 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
   }
   pcl::PCLPointCloud2 pcl_cloud;
   pcl_conversions::toPCL(cloud, pcl_cloud);
-  pcl::PointCloud<pcl::PointXYZ> cloud_organized;
+  pcl::PointCloud<pcl::PointNormal> cloud_organized;
   pcl::fromPCLPointCloud2(pcl_cloud, cloud_organized);
   
   OrganizedFastMeshGenerator ofmg(cloud_organized);
+  ofmg.setEdgeThreshold(edge_threshold);
   lvr::HalfEdgeMesh<VertexType, NormalType> hem;
   ofmg.getMesh(hem);
+
+  std::vector<int> contour, fillup_indices;
+  if(fillup_base_hole){
+    ofmg.getContour(contour);
+    ROS_INFO("base hole contour Size: %d", contour.size());
+    ofmg.fillContour(contour, hem, fillup_indices);
+  }
   
+  hem.finalize();  
+  lvr::MeshBufferPtr mesh_buffer = hem.meshBuffer();
+  //lvr_ros::removeDuplicates(*mesh_buffer);
+  bool success = lvr_ros::fromMeshBufferToTriangleMesh(mesh_buffer, mesh_msg.mesh);
+
+  std_msgs::ColorRGBA std_color, con_color;
+  con_color.r = 1;
+  con_color.g = 0.2;
+  con_color.b = 0.2;
+  con_color.a = 1;
+  
+  std_color.r = 0.2;
+  std_color.g = 1;
+  std_color.b = 0.2;
+  con_color.a = 1;
+  
+  mesh_msg.mesh.vertex_colors.resize(mesh_msg.mesh.vertices.size());
+  
+  for(int i=0; i<mesh_msg.mesh.vertex_colors.size(); i++){
+	mesh_msg.mesh.vertex_colors[i] = std_color;
+  }
+
+  if(fillup_base_hole){
+    for(int i=0; i<contour.size();i++){
+      mesh_msg.mesh.vertex_colors[contour[i]] = con_color;
+    }
+    for(int i=0; i<fillup_indices.size();i++){
+      mesh_msg.mesh.vertex_colors[fillup_indices[i]] = con_color;
+    }
+  }
+
   mesh_msg.header.frame_id = cloud.header.frame_id;
   mesh_msg.header.stamp = cloud.header.stamp;
-  if(lvr_ros::fromMeshBufferToTriangleMesh(hem.meshBuffer(), mesh_msg.mesh)){
+  if(success){
+	ROS_INFO("Publish organized fast mesh in the %s frame with %d triangles, %d vertices and %d vertex normals", mesh_msg.header.frame_id.c_str(), mesh_msg.mesh.triangles.size(), mesh_msg.mesh.vertices.size(), mesh_msg.mesh.vertex_normals.size());
     return true;
   }else{
     ROS_ERROR("conversion from mesh buffer pointer to mesh_msgs::TriangleMeshStamped failed, can not publish organized mesh!");

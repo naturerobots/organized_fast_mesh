@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   lvr_ros
 )
 
-find_package(PCL REQUIRED)
+find_package(PCL 1.2 REQUIRED)
 find_package(lvr REQUIRED)
 
 add_definitions(${PCL_DEFINITIONS})
