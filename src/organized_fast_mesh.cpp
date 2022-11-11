@@ -41,13 +41,12 @@
  *
  *  author: Sebastian Pütz <spuetz@uni-osnabrueck.de>
  */
-
 #include "organized_fast_mesh.h"
 #include "organized_fast_mesh_generator.h"
 #include <mesh_msgs/TriangleMeshStamped.h>
 
-#include "lvr_ros/lvr_ros_conversions.h"
-
+#include <lvr_ros/conversions.h>
+#include <lvr2/geometry/BaseVector.hpp>
 #include <lvr2/geometry/HalfEdgeMesh.hpp>
 #include <lvr2/geometry/ColorVertex.hpp>
 
@@ -75,21 +74,32 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
 
 }
 bool OrganizedFastMesh::generateOrganizedFastMesh(
-  const sensor_msgs::PointCloud2& cloud,
-  mesh_msgs::TriangleMeshStamped& mesh_msg)
+  const sensor_msgs::PointCloud2& cloud, mesh_msgs::TriangleMeshStamped& mesh_msg)
 {
   if(cloud.height < 2){
     ROS_WARN("Received unorganized point cloud!");
     return false;
   }
+
   pcl::PCLPointCloud2 pcl_cloud;
   pcl_conversions::toPCL(cloud, pcl_cloud);
   pcl::PointCloud<pcl::PointNormal> cloud_organized;
   pcl::fromPCLPointCloud2(pcl_cloud, cloud_organized);
-  
+
+/*
+  lvr2::PointCloud lvr2_cloud;
+  lvr2::PointBuffer PointBuffer;
+  lvr_ros::fromPointCloud2ToPointBuffer(cloud )
+*/
+
   OrganizedFastMeshGenerator ofmg(cloud_organized);
   ofmg.setEdgeThreshold(edge_threshold);
-  lvr::HalfEdgeMesh<VertexType, NormalType> hem;
+  //old version
+  //lvr2::HalfEdgeMesh<VertexType, NormalType> hem;
+
+  lvr2::HalfEdgeMesh<lvr2::BaseVector<float>> hem;
+
+
   ofmg.getMesh(hem);
 
   std::vector<int> contour, fillup_indices;
@@ -100,7 +110,7 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
   }
   
   hem.finalize();  
-  lvr::MeshBufferPtr mesh_buffer = hem.meshBuffer();
+  lvr2::MeshBufferPtr mesh_buffer = hem.meshBuffer();
   //lvr_ros::removeDuplicates(*mesh_buffer);
   bool success = lvr_ros::fromMeshBufferToTriangleMesh(mesh_buffer, mesh_msg.mesh);
 
@@ -144,7 +154,8 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 bool OrganizedFastMesh::generateOrganizedFastMeshSrv(
   organized_fast_mesh::OrganizedFastMeshSrv::Request& req,
   organized_fast_mesh::OrganizedFastMeshSrv::Response& res)
-{  
+{
+
   return generateOrganizedFastMesh(req.organized_scan, res.organized_fast_mesh);
 }
 

@@ -1,0 +1,2 @@
+set(organized_fast_mesh_MESSAGE_FILES "")
+set(organized_fast_mesh_SERVICE_FILES "/home/praktikum/catkin_ws/src/organized_fast_mesh/srv/OrganizedFastMeshSrv.srv")

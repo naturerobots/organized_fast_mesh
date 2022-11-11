@@ -64,7 +64,7 @@ OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(pcl::PointCloud<pcl::Poin
   setEdgeThreshold(0.5);
 }
 
-void OrganizedFastMeshGenerator::getMesh(lvr::BaseMesh<lvr::ColorVertex<float, int>, lvr::Normal<float> >& mesh){
+void OrganizedFastMeshGenerator::getMesh(lvr2::BaseMesh<lvr2::ColorVertex<float, int>, lvr2::Normal<float> >& mesh){
 
   // clear the vertices vector
   vertices.clear();

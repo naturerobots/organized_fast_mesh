@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/praktikum/catkin_ws/src/organized_fast_mesh/build/devel/setup.sh

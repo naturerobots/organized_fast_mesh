@@ -34,6 +34,7 @@ link_directories(
 add_service_files(
   FILES
   OrganizedFastMeshSrv.srv
+  TriangleMeshStamedSrv.srv
 )
 
 generate_messages(
@@ -41,7 +42,7 @@ generate_messages(
   std_msgs
   sensor_msgs
   mesh_msgs
-        geometry_msgs
+  geometry_msgs
 )
 
 catkin_package(
@@ -59,6 +60,8 @@ target_link_libraries(organized_fast_mesh
 )
 
 add_dependencies(organized_fast_mesh ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+
+
 
 install(
   DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

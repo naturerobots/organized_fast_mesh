@@ -48,6 +48,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include "organized_fast_mesh/OrganizedFastMeshSrv.h"
+#include <mesh_msgs/TriangleMeshStamped.h>
 
 class OrganizedFastMesh{
 
@@ -66,7 +67,7 @@ class OrganizedFastMesh{
     bool generateOrganizedFastMesh(
       const sensor_msgs::PointCloud2& cloud
 
-    //,mesh_msgs::TriangleMeshStamped& mesh_msg
+    ,mesh_msgs::TriangleMeshStamped& mesh_msg
     );
 
     double edge_threshold;

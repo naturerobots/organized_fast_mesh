@@ -65,22 +65,24 @@
  */
 //old version
 //class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<float, int>, lvr2::Normal<float> >{
-class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<float, int>>{
+class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<float, int>>,lvr2::Normal<float>{
     public:
     /**
      * \brief Constrcutor
      * \param organized_scan The organized pcl point cloud 
      */
 
-   // OrganizedFastMeshGenerator(pcl::PointCloud<pcl::PointNormal>& organized_scan);
-   OrganizedFastMeshGenerator(lvr2::PointCloud& organized_scan);
+   OrganizedFastMeshGenerator(pcl::PointCloud<pcl::PointNormal>& organized_scan);
+   //OrganizedFastMeshGenerator(lvr2::PointCloud& organized_scan);
     /**
      * \brief generates the organized fast mesh
      * \param a reference to the mesh to fill with the data
      */
-    //TODO wichtig
-   // virtual void getMesh(lvr2::BaseMesh<lvr2::ColorVertex<float, int>, lvr2::Normal<float> >>& mesh);
-   //virtual void getMesh(lvr2::BaseMesh<lvr2::ColorVertex<float, int>, lvr2::Normal<float>>& mesh);
+    /*oldversion
+   virtual void getMesh(lvr2::BaseMesh<lvr2::ColorVertex<float, int>, lvr2::Normal<float> >>& mesh);
+
+    */
+    virtual void getMesh(lvr2::BaseMesh<lvr2::BaseVector<float>>& mesh);
     /**
      * \brief sets the maximum edge length to filter big leaps in the 3D depth data
      */
@@ -93,24 +95,26 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
 
 	void normalize(int& x, int& y);
 
-    /** pcl to LVR nicht mehr benötigt
+    /**
      * \brief converts a pcl point into a lvr color vertex
      * \param in pcl point
      * \param out lvr point
 
+    **/
 
     void pclToLvrNormal(pcl::PointNormal& in, lvr2::Normalf& out);
 
-    **
+    /**
      * \brief converts a pcl point into a lvr color vertex
      * \param in pcl point
      * \param out lvr point
-     *
-    void pclToLvrVertex(pcl::PointNormal& in, lvr::ColorVertex<float, int>& out);
+     **/
+
+    void pclToLvrVertex(pcl::PointNormal& in, lvr2::ColorVertex<float, int>& out);
     
-    void pclToLvrVertex(pcl::PointNormal& in, lvr::Vertexf& out);
+    void pclToLvrVertex(pcl::PointNormal& in, lvr2::Vertexf& out);
     
-    void lvrToPclVertex(lvr::Vertexf& vertex, lvr::Normalf& normal, pcl::PointNormal& out);
+    void lvrToPclVertex(lvr2::Vertexf& vertex, lvr::2Normalf& normal, pcl::PointNormal& out);
 
     
     /**
@@ -121,18 +125,15 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
      */
 
     uint32_t toIndex(int x, int y);
-    
-    
     /**
-     * \brief checks if the given vertex exists
-     * \param vertex The vertex to check for existence
-     * \return true if all coords are not nan
-     */
-    /* ToDO Sebastinan fragen warum Thomas fragen ob es eine Alternativ gibt
-    bool pointExists(lvr2::Ver vertex);
+    * \brief checks if the given vertex exists
+    * \param vertex The vertex to check for existence
+    * \return true if all coords are not nan
+    */
+    bool pointExists(lvr::Vertexf& vertex);
 
     bool pointExists(pcl::PointNormal& point);
-    */
+
 
     /**
      * \brief checks if the given vertex exists
@@ -146,12 +147,13 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
      * \param normal The normal to check for existence
      * \return true if all coords are not nan
      */
-     /* ToDO checken Thomas fragen
     bool normalExists(lvr::Normalf& normal);
-    */
+
     /**
      * \brief tests if the face has long edges
      */
+
+
     bool hasLongEdge(int a, int b, int c, float sqr_edge_threshold);
     
     void showField(std::map<int, int>& index_map, int x, int y);
@@ -163,10 +165,10 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
 	bool inBounds(int x, int y);
 
     //! \holds the organized point cloud
-    //pcl::PointCloud<pcl::PointNormal> organized_scan;
-    lvr2::PointCloud organized_scan;
-    //pcl::PointCloud<pcl::PointNormal>::Ptr mesh_points;
-    lvr2::PointCloud* mesh_points;
+    pcl::PointCloud<pcl::PointNormal> organized_scan;
+    //lvr2::PointCloud organized_scan;
+    pcl::PointCloud<pcl::PointNormal>::Ptr mesh_points;
+    //lvr2::PointCloud* mesh_points;
     //! \holds the vertices in the same order as in the mesh
     std::vector<lvr2::ColorVertex<float, int> >vertices;
     //! \threshold value for the longe edge test
