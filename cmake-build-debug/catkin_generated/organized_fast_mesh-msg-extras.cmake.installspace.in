@@ -1,2 +1,0 @@
-set(organized_fast_mesh_MESSAGE_FILES "")
-set(organized_fast_mesh_SERVICE_FILES "srv/OrganizedFastMeshSrv.srv")
