@@ -42,22 +42,23 @@
  *  author: Sebastian Pütz <spuetz@uni-osnabrueck.de>
  */
 
-#include <organized_fast_mesh_generator.h>
+#include "organized_fast_mesh_generator.h"
 #include <boost/math/special_functions/fpclassify.hpp>
-#include <pcl/surface/mls.h>
-#include <pcl/surface/impl/mls.hpp>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/sample_consensus/ransac.h>
-#include <pcl/sample_consensus/sac_model_plane.h>
-#include <pcl/filters/project_inliers.h>
-#include <pcl/surface/gp3.h>
-#include <lvr/geometry/HalfEdgeMesh.hpp>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/surface/marching_cubes_rbf.h>
+#include <pcl-1.10/pcl/surface/mls.h>
 
-  OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(pcl::PointCloud<pcl::PointNormal>& organized_scan)
+#include <pcl-1.10/pcl/surface/impl/mls.hpp>
+#include <pcl-1.10/pcl/sample_consensus/method_types.h>
+#include <pcl-1.10/pcl/sample_consensus/model_types.h>
+#include <pcl-1.10/pcl/segmentation/sac_segmentation.h>
+#include <pcl-1.10/pcl/sample_consensus/ransac.h>
+#include <pcl-1.10/pcl/sample_consensus/sac_model_plane.h>
+#include <pcl-1.10/pcl/filters/project_inliers.h>
+#include <pcl-1.10/pcl/surface/gp3.h>
+#include <lvr2/geometry/HalfEdgeMesh.hpp>
+#include <pcl-1.10/pcl/filters/extract_indices.h>
+#include <pcl-1.10/pcl/surface/marching_cubes_rbf.h>
+
+OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(pcl::PointCloud<pcl::PointNormal>& organized_scan)
 : organized_scan(organized_scan)
 {
   setEdgeThreshold(0.5);

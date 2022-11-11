@@ -43,18 +43,23 @@
  */
 
 #include "organized_fast_mesh.h"
-
 #include "organized_fast_mesh_generator.h"
 #include <mesh_msgs/TriangleMeshStamped.h>
-#include <lvr_ros/lvr_ros_conversions.h>
-#include <lvr/geometry/HalfEdgeMesh.hpp>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/PCLPointCloud2.h>
+
+#include "lvr_ros/lvr_ros_conversions.h"
+
+#include <lvr2/geometry/HalfEdgeMesh.hpp>
+#include <lvr2/geometry/ColorVertex.hpp>
+
+
+#include <pcl-1.10/pcl/point_types.h>
+#include <pcl-1.10/pcl/point_cloud.h>
+#include <pcl-1.10/pcl/PCLPointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-typedef lvr::ColorVertex<float, int> VertexType;
-typedef lvr::Normal<float> NormalType;
+
+typedef lvr2::ColorVertex<float, int> VertexType;
+typedef lvr2::Normal<float> NormalType;
 
 
 OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)

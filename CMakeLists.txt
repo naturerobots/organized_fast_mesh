@@ -13,22 +13,22 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(PCL 1.2 REQUIRED)
-find_package(lvr REQUIRED)
+find_package(LVR2 REQUIRED)
 
 add_definitions(${PCL_DEFINITIONS})
-add_definitions(${lvr_DEFINITIONS})
+add_definitions(${LVR2_DEFINITIONS})
 
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
-  ${lvr_INCLUDE_DIRS}
+  ${LVR2_INCLUDE_DIRS}
 )
 
 link_directories(
   ${catkin_LIBRARY_DIRS}
   ${PCL_LIBRARY_DIRS}
-  ${lvr_LIBRARY_DIRS}
+  ${LVR2_LIBRARY_DIRS}
 )
 
 add_service_files(
@@ -41,19 +41,20 @@ generate_messages(
   std_msgs
   sensor_msgs
   mesh_msgs
+        geometry_msgs
 )
 
 catkin_package(
   CATKIN_DEPENDS roscpp std_msgs sensor_msgs pcl_ros lvr_ros
   INCLUDE_DIRS include 
-  DEPENDS PCL lvr
+  DEPENDS PCL LVR2
 ) 
 
 add_executable(organized_fast_mesh src/organized_fast_mesh.cpp src/organized_fast_mesh_generator.cpp)
 
 target_link_libraries(organized_fast_mesh
   ${catkin_LIBRARIES}
-  ${lvr_LIBRARIES}
+  ${LVR2_LIBRARIES}
   ${PCL_LIBRARIES}
 )
 
