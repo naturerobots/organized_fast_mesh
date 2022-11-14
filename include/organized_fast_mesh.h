@@ -47,7 +47,8 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
-#include "organized_fast_mesh/OrganizedFastMeshSrv.h"
+#include "organized_fast_mesh/OrganizedFastMeshSrv.h
+#include "organized_fast_mesh/TraingleMeshStamped.h"
 
 class OrganizedFastMesh{
 
@@ -61,11 +62,13 @@ class OrganizedFastMesh{
     
     void pointCloud2Callback(const sensor_msgs::PointCloud2::ConstPtr &cloud);
     bool generateOrganizedFastMeshSrv(
-      organized_fast_mesh::OrganizedFastMeshSrv::Request& req,
+      OrganizedFastMesh::OrganizedFastMeshSrv::Request& req,
       organized_fast_mesh::OrganizedFastMeshSrv::Response& res);
     bool generateOrganizedFastMesh(
-      const sensor_msgs::PointCloud2& cloud,
-      mesh_msgs::TriangleMeshStamped& mesh_msg);
+      const sensor_msgs::PointCloud2& cloud
+
+    ,TriangleMeshStamped&  mesh_msg
+    );
 
     double edge_threshold;
     bool fillup_base_hole;
