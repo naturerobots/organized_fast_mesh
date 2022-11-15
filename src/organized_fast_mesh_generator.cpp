@@ -57,101 +57,138 @@
 #include <lvr2/geometry/HalfEdgeMesh.hpp>
 #include <pcl-1.10/pcl/filters/extract_indices.h>
 #include <pcl-1.10/pcl/surface/marching_cubes_rbf.h>
+#include <lvr2/io/DataStruct.hpp>
 
 OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(pcl::PointCloud<pcl::PointNormal>& organized_scan)
 : organized_scan(organized_scan)
 {
   setEdgeThreshold(0.5);
 }
+//TODO ob weglassen von Normalen schlimm ist Mesh für nOrmalen
+void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
+    // clear the vertices vector
+    vertices.clear();
+    mesh_points = pcl::PointCloud<pcl::PointNormal>::Ptr(new pcl::PointCloud<pcl::PointNormal>);
 
-void OrganizedFastMeshGenerator::getMesh(lvr2::BaseMesh<lvr2::ColorVertex<float, int>, lvr2::Normal<float> >& mesh){
 
-  // clear the vertices vector
-  vertices.clear();
-  mesh_points = pcl::PointCloud<pcl::PointNormal>::Ptr(new pcl::PointCloud<pcl::PointNormal>);
+    uint32_t width = organized_scan.width;
+    uint32_t height = organized_scan.height;
+
+    index_map_index = 0;
+    int index_cnt = 0;
+
+    // clear index map
+    index_map.clear();
+
+    // add all vertices and normals to the mesh
+    // also create an index map for the triangle creation
+    for (uint32_t y = 0; y < height; y++) {
+        for (uint32_t x = 0; x < width; x++) {
+
+            lvr2::ColorVertex<float, int> point; // point at (x,y)
 
 
-  uint32_t width = organized_scan.width;
-  uint32_t height = organized_scan.height;
 
-  index_map_index = 0;
-  int index_cnt = 0;
 
-  // clear index map
-  index_map.clear();
+            lvr2::Normal<float> normal; // normal at (x,y);
+            // get the point at (x,y)
+            pcl::PointNormal p_pcl = organized_scan(x, y);
 
-  // add all vertices and normals to the mesh
-  // also create an index map for the triangle creation
-  for(uint32_t y=0; y<height; y++){
-    for(uint32_t x=0; x<width; x++){
+            pclToLvrVertex(p_pcl, point);
+            pclToLvrNormal(p_pcl, normal);
+            if (!pointExists(point) || !normalExists(normal)) {
+                // index maps to -1
+                index_map[index_map_index] = -1;
+                index_map_index++;
+            } else { // if the point exists (not nan)
+                // index maps to existing vertex in the mesh
+                index_map[index_map_index] = index_cnt;
+                index_map_index++;
+                index_cnt++;
+                //3 müssten reichen
+                boost::shared_array<float> arryPoint(new float[3]);
+                arryPoint[0] = point.x;
+                arryPoint[1] = point.y;
+                arryPoint[2] = point.z;
 
-      lvr::ColorVertex<float, int> point; // point at (x,y)
-      lvr::Normalf normal; // normal at (x,y);
-      // get the point at (x,y)
-      pcl::PointNormal p_pcl = organized_scan(x, y);
+                boost::shared_array<float> arryNormal(new float[3]);
+                arryNormal[0] = normal.x;
+                arryNormal[1] = normal.y;
+                arryNormal[2] = normal.z;
 
-      pclToLvrVertex(p_pcl, point);
-      pclToLvrNormal(p_pcl, normal);
-      if(!pointExists(point) || !normalExists(normal)){
-        // index maps to -1
-        index_map[index_map_index] = -1;
-        index_map_index++;
-      }else{ // if the point exists (not nan)
-        // index maps to existing vertex in the mesh
-        index_map[index_map_index] = index_cnt;
-        index_map_index++;
-        index_cnt++;
 
-        mesh.addVertex(point);
-        mesh_points->push_back(p_pcl);
-        mesh.addNormal(normal);
-        vertices.push_back(point);
+                mesh.setVertices(arryPoint, 1);
+                mesh_points->push_back(p_pcl);
+                mesh.setVertexNormals(arryNormal);
+                vertices.push_back(point);
 
-      }
+            }
+        }
     }
-  }
 
 
-  // start adding faces to the mesh
-  for(uint32_t y=0; y<height; y++){  
-    for(uint32_t x=0; x<width; x++){
 
-      // get indices around the borders for a 360 degree view
-      uint32_t x_right = (x == width-1) ? 0 : x+1;
-      uint32_t y_bottom = (y == height-1) ? 0 : y+1;
+    // start adding faces to the mesh
+    for (uint32_t y = 0; y < height; y++) {
+        for (uint32_t x = 0; x < width; x++) {
 
-      // get the corresponding indices in the mesh
-      int idx =    index_map[toIndex(x, y)];
-      int idx_r =  index_map[toIndex(x_right, y)];
-      int idx_rb = index_map[toIndex(x_right, y_bottom)];
-      int idx_b =  index_map[toIndex(x, y_bottom)];
+            // get indices around the borders for a 360 degree view
+            uint32_t x_right = (x == width - 1) ? 0 : x + 1;
+            uint32_t y_bottom = (y == height - 1) ? 0 : y + 1;
 
-      //     top              bottom
-      //   triangle          triangle
-      //    .___.             .   .
-      //     \  |             |\
+            // get the corresponding indices in the mesh
+
+
+            int idx = index_map[toIndex(x, y)];
+            int idx_r = index_map[toIndex(x_right, y)];
+            int idx_rb = index_map[toIndex(x_right, y_bottom)];
+            int idx_b = index_map[toIndex(x, y_bottom)];
+
+            //     top              bottom
+            //   triangle          triangle
+            //    .___.             .   .
+            //     \  |             |\
       //      \ |             | \
       //       \|             |  \
       //    .   .             .___.
-      // 
+            //
 
-      // create top triangle if all vertices exists
-      if(idx != -1  && idx_rb != -1 && idx_r != -1){
-        // check if there are longer edges then the threshold
-        if(!hasLongEdge(idx, idx_rb, idx_r, sqr_edge_threshold))
-          mesh.addTriangle(idx, idx_rb, idx_r);
-      }
-      // create bottom triangle if all vertices exists
-      if(idx != -1 && idx_b != -1 && idx_rb != -1){
-        // check if there are longer edges then the threshold
-        if(!hasLongEdge(idx, idx_b, idx_rb, sqr_edge_threshold))
-          mesh.addTriangle(idx, idx_b, idx_rb);
-      }
+            // create top triangle if all vertices exists
+            if (idx != -1 && idx_rb != -1 && idx_r != -1) {
+                // check if there are longer edges then the threshold
+                if (!hasLongEdge(idx, idx_rb, idx_r, sqr_edge_threshold)) {
+                    boost::shared_array<unsigned int> triangleIndex(new unsigned int[3]);
+                    /*TODO warum ???ß
+
+                    triangleIndex[0] = 0;
+
+                    triangleIndex[1] = idx_rb;
+                    triangleIndex[2] = idx_r;
+                    mesh.setFaceIndices(triangleIndex,3);
+                     */
+                }
+                // create bottom triangle if all vertices exists
+                if (idx != -1 && idx_b != -1 && idx_rb != -1) {
+                    // check if there are longer edges then the threshold
+                    if (!hasLongEdge(idx, idx_b, idx_rb, sqr_edge_threshold)) {
+                        /*
+                        lvr2::indexArray test (new unsigned int[3]);
+
+                        triangleIndex[0] = idx;
+
+                        triangleIndex[1] = idx_b;
+                        triangleIndex[2] = idx_rb;
+                        mesh.setFaceIndices(triangleIndex,3);
+                        */
+                    }
+                }
+            }
+
+            // finalize the mesh for the MeshBufferPointer
+            //TODO warum??
+            //mesh.finalize();
+        }
     }
-  }
-
-  // finalize the mesh for the MeshBufferPointer
-  mesh.finalize();
 }
 
 bool OrganizedFastMeshGenerator::getContour(std::vector<int>& contour_indices){
@@ -337,22 +374,26 @@ inline bool OrganizedFastMeshGenerator::inBounds(int x, int y){
 }
 
 inline bool OrganizedFastMeshGenerator::hasLongEdge(int a, int b, int c, float sqr_edge_threshold){
-  lvr::ColorVertex<float, int> v_a = vertices[a];
-  lvr::ColorVertex<float, int> v_b = vertices[b];
-  lvr::ColorVertex<float, int> v_c = vertices[c];
+  lvr2::ColorVertex<float, int> v_a = vertices[a];
+  lvr2::ColorVertex<float, int> v_b = vertices[b];
+  lvr2::ColorVertex<float, int> v_c = vertices[c];
+  //TODO warum was macht sqr
+  /*
   if(v_a.sqrDistance(v_b) > sqr_edge_threshold) return true;
   if(v_b.sqrDistance(v_c) > sqr_edge_threshold) return true;
   if(v_c.sqrDistance(v_a) > sqr_edge_threshold) return true;
+  */
+
   return false;
 }
 
-inline void OrganizedFastMeshGenerator::pclToLvrNormal(pcl::PointNormal& in, lvr::Normalf& out){
+inline void OrganizedFastMeshGenerator::pclToLvrNormal(pcl::PointNormal& in, lvr2::Normal<float>& out){
   out.x = in.normal_x;
   out.y = in.normal_y;
   out.z = in.normal_z;
 }
 
-inline void OrganizedFastMeshGenerator::lvrToPclVertex(lvr::Vertexf& vertex, lvr::Normalf& normal, pcl::PointNormal& out){
+inline void OrganizedFastMeshGenerator::lvrToPclVertex(const lvr2::ColorVertex<float,int>& vertex, const lvr2::Normal<float>& normal, pcl::PointNormal& out){
   out.x = vertex.x;
   out.y = vertex.y;
   out.z = vertex.z;
@@ -360,14 +401,14 @@ inline void OrganizedFastMeshGenerator::lvrToPclVertex(lvr::Vertexf& vertex, lvr
   out.normal_y = normal.y;
   out.normal_z = normal.z;
 }
-
-inline void OrganizedFastMeshGenerator::pclToLvrVertex(pcl::PointNormal& in, lvr::Vertexf& out){
+/*
+inline void OrganizedFastMeshGenerator::pclToLvrVertex(pcl::PointNormal& in, lvr2::ColorVertex<float,int>& out){
   out.x = in.x;
   out.y = in.y;
   out.z = in.z;
 }
-
-inline void OrganizedFastMeshGenerator::pclToLvrVertex(pcl::PointNormal& in, lvr::ColorVertex<float, int>& out){
+*/
+inline void OrganizedFastMeshGenerator::pclToLvrVertex(pcl::PointNormal& in, lvr2::ColorVertex<float, int>& out){
   out.x = in.x;
   out.y = in.y;
   out.z = in.z;
@@ -382,21 +423,21 @@ inline uint32_t OrganizedFastMeshGenerator::toIndex(int x, int y){
   return y*width+x;
 }
 
-inline bool OrganizedFastMeshGenerator::pointExists(lvr::ColorVertex<float, int>& vertex){
+inline bool OrganizedFastMeshGenerator::pointExists(lvr2::ColorVertex<float, int>& vertex){
   return
     boost::math::isfinite<float>(vertex.x) &&
     boost::math::isfinite<float>(vertex.y) &&
     boost::math::isfinite<float>(vertex.z);
 }
-
-inline bool OrganizedFastMeshGenerator::pointExists(lvr::Vertexf& vertex){
+/*
+inline bool OrganizedFastMeshGenerator::pointExists(lvr2::Vertexf& vertex){
   return
     boost::math::isfinite<float>(vertex.x) &&
     boost::math::isfinite<float>(vertex.y) &&
     boost::math::isfinite<float>(vertex.z);
 }
-
-inline bool OrganizedFastMeshGenerator::normalExists(lvr::Normalf& normal){
+*/
+inline bool OrganizedFastMeshGenerator::normalExists(lvr2::Normal<float>& normal){
   return
     boost::math::isfinite<float>(normal.x) &&
     boost::math::isfinite<float>(normal.y) &&
@@ -430,7 +471,7 @@ inline void OrganizedFastMeshGenerator::normalize(int& x, int& y){
 
 
 
-void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, lvr::BaseMesh<lvr::ColorVertex<float, int>, lvr::Normal<float> >& mesh, std::vector<int>& fillup_indices){
+void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, std::shared_ptr<lvr2::MeshBuffer> mesh,std::vector<int>& fillup_indices){
   std::vector<int>::iterator c_iter;
   std::map<int, int> hole_index_map;
 
@@ -471,19 +512,19 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
   }
 
   // calculate the centroid of the contour
-  lvr::Vertexf centroid;
+  lvr2::ColorVertex<float,int> centroid;
 
   for(c_iter = contour_indices.begin(); 
       c_iter != contour_indices.end(); ++ c_iter)
   {
-    lvr::Vertexf current_vertex;
+    lvr2::ColorVertex<float,int> current_vertex;
     pclToLvrVertex((*mesh_points)[*c_iter], current_vertex);
     centroid += current_vertex;
   }
   centroid /= contour_indices.size();
 
   pcl::PointNormal pcl_centroid;
-  lvr::Normalf normal(0,0,1);
+  lvr2::Normal<float>normal(0,0,1);
   lvrToPclVertex(centroid, normal, pcl_centroid);
 
   int num_sub_contours = (int) floor(log2(contour_indices.size()));
@@ -499,13 +540,25 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
     skip*=2;
     for(int j=0; j<contour_indices.size(); j+=skip){
 
-      lvr::Vertexf con_vertex(vertices[contour_indices[j]]);
-      lvr::Vertexf sub_vec = centroid + ((con_vertex - centroid)*scale);
-      lvr::Normalf sub_nor(0, 0, 1);
-      mesh.addVertex(lvr::ColorVertex<float, int>(sub_vec));
-      mesh.addNormal(sub_nor);
+      lvr2::ColorVertex<float,int> con_vertex(vertices[contour_indices[j]]);
+      //lvr2::ColorVertex<float,int> sub_vec = centroid + ((con_vertex - centroid)*scale);
+      lvr2::floatArr arrSub_vec (new float[3]);
+      arrSub_vec[0]= centroid[0]+((con_vertex[0])-centroid[0]*scale);
+      arrSub_vec[1]= centroid[1]+((con_vertex[1])-centroid[2]*scale);
+      arrSub_vec[2]= centroid[2]+((con_vertex[2])-centroid[2]*scale);
+
+      lvr2::floatArr arrSub_nor(new float[3]);
+      arrSub_nor[0]=0;
+      arrSub_nor[1]=0;
+      arrSub_nor[2]=1;
+
+      mesh->setVertices(arrSub_vec,1);
+      mesh->setVertexNormals(arrSub_nor);
 
       pcl::PointNormal pcl_sub;
+      lvr2::ColorVertex<float,int> sub_vec(arrSub_vec[0],arrSub_vec[1],arrSub_vec[2]);
+      lvr2::Normal<float> sub_nor(arrSub_nor[0],arrSub_nor[1],arrSub_nor[2]);
+
       lvrToPclVertex(sub_vec, sub_nor, pcl_sub);
       mesh_points->push_back(pcl_sub);
       int new_index = ((int)mesh_points->size())-1;
@@ -514,9 +567,19 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
     }
     hole_indices.push_back(inner_contour);
   }
-  mesh.addVertex(lvr::ColorVertex<float, int>(centroid));
-  lvr::Normalf sub_nor(0, 0, 1);
-  mesh.addNormal(sub_nor);
+    lvr2::floatArr arrycentroid(new float[3]);
+    arrycentroid[0]=centroid.x;
+    arrycentroid[1]=centroid.y;
+    arrycentroid[2]=centroid.z;
+
+  mesh->setVertices(arrycentroid,1);
+  lvr2::floatArr arrySub_nor(new float[3]);
+  arrySub_nor[0]=0;
+  arrySub_nor[1]=0;
+  arrySub_nor[2]=1;
+
+  lvr2::Normal<float> sub_nor (0,0,1);
+  mesh->setVertexNormals(arrySub_nor);
   pcl::PointNormal pcl_sub;
   lvrToPclVertex(centroid, sub_nor, pcl_sub);
   mesh_points->push_back(pcl_sub);
@@ -617,7 +680,7 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
   std::cerr << "Number of Inliers: " << inliers->indices.size () << std::endl;
   std::cerr << "Size of mesh points: " << mesh_points->size() << std::endl;
 
-  lvr::Normalf hole_normal(
+  lvr2::Normal<float> hole_normal(
       coefficients->values[0],
       coefficients->values[1],
       coefficients->values[2]);
@@ -641,11 +704,21 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
      mls.process(*mls_points);
    */
 
-  lvr::HalfEdgeMesh<lvr::ColorVertex<float, int>, lvr::Normal<float> >* h_mesh;
-  h_mesh = static_cast<lvr::HalfEdgeMesh<lvr::ColorVertex<float, int>, lvr::Normal<float> >* >(&mesh);
-  std::vector<lvr::HalfEdgeVertex<lvr::ColorVertex<float, int>, lvr::Normal<float> >* >& mesh_vertices = h_mesh->getVertices();
 
-  for(int i=0; i< inliers->indices.size(); i++){
+  //TODO Klaren wie
+  /*
+  lvr2::HalfEdgeMesh<BaseVector<float>>* h_mesh;
+
+  h_mesh = static_cast<lvr2::HalfEdgeMesh<BaseVector<float>>*> (&mesh);
+
+
+  std::vector<lvr2::HalfEdgeVertex<lvr::ColorVertex<float, int>, lvr::Normal<float> >* >& mesh_vertices = h_mesh->getVertices();
+  */
+
+
+
+
+    for(int i=0; i< inliers->indices.size(); i++){
     int index = inliers->indices[i];
     mesh_vertices[index]->m_position.x = (*mesh_points)[index].x;
     mesh_vertices[index]->m_position.y = (*mesh_points)[index].y;
@@ -680,10 +753,14 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
       std::cerr << "invalid index:" << c << std::endl;
       continue;
     }
-    mesh.addTriangle(
-        hole_triangles[i][0],
-        hole_triangles[i][1],
-        hole_triangles[i][2]);
+    lvr2::indexArray triangleInd (new unsigned int[3]);
+    triangleInd[0]=hole_triangles[i][0];
+    triangleInd[1]=hole_triangles[i][1];
+    triangleInd[2]=hole_triangles[i][3];
+
+
+      mesh.setFaceIndices(
+              triangleInd,3);
   }
 
 

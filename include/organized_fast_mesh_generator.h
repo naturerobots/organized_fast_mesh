@@ -64,12 +64,12 @@
  * \brief Generates an organized fast mesh out of an organized point cloud
  */
 //old version
-//class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<float, int>, lvr2::Normal<float> >{
+
 class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<float, int>>,lvr2::Normal<float>{
     public:
     /**
      * \brief Constrcutor
-     * \param organized_scan The organized pcl point cloud 
+     * \param organized_scan The organized pcl point cloud
      */
 
    OrganizedFastMeshGenerator(pcl::PointCloud<pcl::PointNormal>& organized_scan);
@@ -82,15 +82,15 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
    virtual void getMesh(lvr2::BaseMesh<lvr2::ColorVertex<float, int>, lvr2::Normal<float> >>& mesh);
 
     */
-    virtual void getMesh(lvr2::BaseMesh<lvr2::BaseVector<float>>& mesh);
+    virtual void getMesh(lvr2::MeshBuffer& mesh);
     /**
      * \brief sets the maximum edge length to filter big leaps in the 3D depth data
      */
     void setEdgeThreshold(float dist);
-    
+
   	bool getContour(std::vector<int>& contour_indices);
-  	
-    //void fillContour(std::vector<int>& contour_indices, lvr2::BaseMesh<lvr2::ColorVertex<float, int>, lvr2::Normal<float> >& mesh, std::vector<int>& fillup_indices);
+
+    void fillContour(std::vector<int>& contour_indices, std::shared_ptr<lvr2::MeshBuffer>,std::vector<int>& fillup_indices);
   private:
 
 	void normalize(int& x, int& y);
@@ -102,7 +102,7 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
 
     **/
 
-    void pclToLvrNormal(pcl::PointNormal& in, lvr2::Normalf& out);
+    void pclToLvrNormal(pcl::PointNormal& in, lvr2::Normal<float>& out);
 
     /**
      * \brief converts a pcl point into a lvr color vertex
@@ -111,12 +111,12 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
      **/
 
     void pclToLvrVertex(pcl::PointNormal& in, lvr2::ColorVertex<float, int>& out);
-    
-    void pclToLvrVertex(pcl::PointNormal& in, lvr2::Vertexf& out);
-    
-    void lvrToPclVertex(lvr2::Vertexf& vertex, lvr::2Normalf& normal, pcl::PointNormal& out);
 
-    
+    //void pclToLvrVertex(pcl::PointNormal& in, lvr2::ColorVertex<>& out);
+
+    void lvrToPclVertex(const lvr2::ColorVertex<float,int>& vertex, const  lvr2::Normal<float>& normal, pcl::PointNormal& out);
+
+
     /**
      * \brief calculates the corresponding index for x and y
      * \param x x-coord
@@ -130,7 +130,7 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
     * \param vertex The vertex to check for existence
     * \return true if all coords are not nan
     */
-    bool pointExists(lvr::Vertexf& vertex);
+    bool pointExists(lvr2::ColorVertex<float,int>& vertex);
 
     bool pointExists(pcl::PointNormal& point);
 
@@ -140,14 +140,14 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
      * \param vertex The vertex to check for existence
      * \return true if all coords are not nan
      */
-    bool pointExists(lvr2::ColorVertex<float, int>& vertex);
+   // bool pointExists(lvr2::ColorVertex<float, int>& vertex);
 
     /**
      * \brief checks if the given normal exists
      * \param normal The normal to check for existence
      * \return true if all coords are not nan
      */
-    bool normalExists(lvr::Normalf& normal);
+    bool normalExists(lvr2::Normal<float>& normal);
 
     /**
      * \brief tests if the face has long edges
@@ -155,11 +155,11 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
 
 
     bool hasLongEdge(int a, int b, int c, float sqr_edge_threshold);
-    
+
     void showField(std::map<int, int>& index_map, int x, int y);
-	  
+
     bool findContour(std::map<int, int>& index_map, std::vector<int>& contour_indices, int start_x, int start_y, int end_x, int end_y);
-    
+
 	bool isValid(int x, int y);
 
 	bool inBounds(int x, int y);
@@ -175,10 +175,10 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
     float sqr_edge_threshold;
     //! \map old indices to new indices, invalid indices are -1
     std::map<int, int> index_map;
-    
+
     size_t index_map_index;
 
-    
+
 
 };
 
