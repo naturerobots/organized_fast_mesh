@@ -471,7 +471,7 @@ inline void OrganizedFastMeshGenerator::normalize(int& x, int& y){
 
 
 
-void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, std::shared_ptr<lvr2::MeshBuffer> mesh,std::vector<int>& fillup_indices){
+void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, lvr2::MeshBufferPtr mesh,std::vector<int>& fillup_indices){
   std::vector<int>::iterator c_iter;
   std::map<int, int> hole_index_map;
 
@@ -705,20 +705,32 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
    */
 
 
-  //TODO Klaren wie
-  /*
+  //TODO Klaren wie WICHTIG BEI PROBLEMEN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  /*old
   lvr2::HalfEdgeMesh<BaseVector<float>>* h_mesh;
-
   h_mesh = static_cast<lvr2::HalfEdgeMesh<BaseVector<float>>*> (&mesh);
-
-
   std::vector<lvr2::HalfEdgeVertex<lvr::ColorVertex<float, int>, lvr::Normal<float> >* >& mesh_vertices = h_mesh->getVertices();
   */
 
+  //Hope
+  std::vector<lvr2::HalfEdgeVertex<lvr2::BaseVector<float>>>* mesh_vertices;
 
+  lvr2::floatArr floatArr = mesh->getVertices();
 
+  size_t numVertieces = mesh->numVertices();
 
-    for(int i=0; i< inliers->indices.size(); i++){
+  for (int i = 0; i <numVertieces;i++){
+      lvr2::HalfEdgeVertex<lvr2::BaseVector<float>> halfEdge;
+      lvr2::BaseVector<float> baseVec;
+      baseVec.x = floatArr[i+0];
+      baseVec.y = floatArr[i+1];
+      baseVec.z = floatArr[i+2];
+      halfEdge.pos = baseVec;
+      mesh_vertices->push_back(halfEdge);
+
+  }
+  /* OLD VERSEION ALTERNATIVE DAFÜR MIT Normalen möglich ???
+  for(int i=0; i< inliers->indices.size(); i++){
     int index = inliers->indices[i];
     mesh_vertices[index]->m_position.x = (*mesh_points)[index].x;
     mesh_vertices[index]->m_position.y = (*mesh_points)[index].y;
@@ -731,6 +743,7 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
       std::cout << "invalid point or normal with buffer index: " << index <<  std::endl;
     }
   }  
+*/
 
   for(size_t i=0; i<hole_triangles.size(); i++){
     if(hole_triangles[i].size() != 3){
@@ -741,15 +754,15 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
     int b = hole_triangles[i][1];
     int c = hole_triangles[i][2];
 
-    if(a < 0 || a >= mesh_vertices.size()){
+    if(a < 0 || a >= mesh_vertices->size()){
       std::cerr << "invalid index:" << a << std::endl;
       continue;
     }
-    if(b < 0 || b >= mesh_vertices.size()){
+    if(b < 0 || b >= mesh_vertices->size()){
       std::cerr << "invalid index:" << b << std::endl;
       continue;
     }
-    if(c < 0 || c >= mesh_vertices.size()){
+    if(c < 0 || c >= mesh_vertices->size()){
       std::cerr << "invalid index:" << c << std::endl;
       continue;
     }
@@ -759,7 +772,7 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
     triangleInd[2]=hole_triangles[i][3];
 
 
-      mesh.setFaceIndices(
+      mesh->setFaceIndices(
               triangleInd,3);
   }
 
