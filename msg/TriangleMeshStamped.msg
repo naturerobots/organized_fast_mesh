@@ -1,5 +1,4 @@
 sensor_msgs/PointCloud2 organized_scan
----
 std_msgs/Header header
 mesh_msgs/MeshTriangleIndices[] triangles # list of triangles; the index values refer to positions in vertices (and vertex_normals, if given)
 geometry_msgs/Point[] vertices # the actual vertices that make up the mesh

@@ -713,6 +713,7 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
   */
 
   //Hope
+
   std::vector<lvr2::HalfEdgeVertex<lvr2::BaseVector<float>>>* mesh_vertices;
 
   lvr2::floatArr floatArr = mesh->getVertices();

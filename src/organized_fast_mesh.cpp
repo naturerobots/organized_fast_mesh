@@ -43,8 +43,6 @@
  */
 #include "organized_fast_mesh.h"
 #include "organized_fast_mesh_generator.h"
-#include "TriangleMeshStamped.h"
-
 #include <lvr_ros/conversions.h>
 #include <lvr2/geometry/BaseVector.hpp>
 #include <lvr2/geometry/HalfEdgeMesh.hpp>
