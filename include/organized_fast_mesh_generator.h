@@ -78,10 +78,10 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
      * \brief generates the organized fast mesh
      * \param a reference to the mesh to fill with the data
      */
-    /*oldversion
-   virtual void getMesh(lvr2::BaseMesh<lvr2::ColorVertex<float, int>, lvr2::Normal<float> >>& mesh);
 
-    */
+   virtual void getMesh(lvr2::BaseMesh<float>& mesh) =0;
+
+
     virtual void getMesh(lvr2::MeshBuffer& mesh);
     /**
      * \brief sets the maximum edge length to filter big leaps in the 3D depth data

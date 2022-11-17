@@ -41,11 +41,7 @@ add_service_files(
 
 )
 
-add_message_files(
-    FILES
-    TriangleMeshStamped.msg
 
-)
 
 generate_messages(
   DEPENDENCIES
@@ -69,7 +65,6 @@ target_link_libraries(organized_fast_mesh
   ${LVR2_LIBRARIES}
   ${PCL_LIBRARIES}
 )
-set(triangleMSGS  triangle_mesh_stamped)
 
 
 add_dependencies(organized_fast_mesh ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)

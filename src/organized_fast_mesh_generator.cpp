@@ -64,6 +64,9 @@ OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(pcl::PointCloud<pcl::Poin
 {
   setEdgeThreshold(0.5);
 }
+
+
+
 //TODO ob weglassen von Normalen schlimm ist Mesh für nOrmalen
 void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
     // clear the vertices vector

@@ -63,7 +63,7 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
   : nh_(nh)
 {
   cloud_sub_ = nh_.subscribe("input_cloud", 20, &OrganizedFastMesh::pointCloud2Callback, this);
-  mesh_pub_ = nh_.advertise<organizedFastMesh::TriangleMeshStamped>("organized_mesh", 1);
+  mesh_pub_ = nh_.advertise<mesh_msgs::TriangleMeshStamped>("organized_mesh", 1);
   service_ = nh_.advertiseService("organized_fast_mesh", &OrganizedFastMesh::generateOrganizedFastMeshSrv, this);
 
   ros::NodeHandle p_nh_("~");
@@ -72,7 +72,7 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
 
 }
 bool OrganizedFastMesh::generateOrganizedFastMesh(
-  const sensor_msgs::PointCloud2& cloud, organizedFastMesh::TriangleMeshStamped& mesh_msg)
+  const sensor_msgs::PointCloud2& cloud, mesh_msgs::TriangleMeshStamped& mesh_msg)
 {
   if(cloud.height < 2){
     ROS_WARN("Received unorganized point cloud!");
