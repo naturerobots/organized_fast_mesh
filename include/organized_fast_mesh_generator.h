@@ -45,6 +45,8 @@
 
 #ifndef ORGANIZED_FAST_MESH_GENERATOR_H_
 #define ORGANIZED_FAST_MESH_GENERATOR_H_
+#include <lvr2/geometry/HalfEdgeMesh.hpp>
+
 #include <lvr2/reconstruction/MeshGenerator.hpp>
 #include <lvr2/geometry/BaseMesh.hpp>
 #include <lvr2/geometry/ColorVertex.hpp>
@@ -79,8 +81,9 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
      * \param a reference to the mesh to fill with the data
      */
 
-    void getMesh(lvr2::BaseMesh<float>& mesh);
+    void getMesh(lvr2::BaseMesh<lvr2::ColorVertex<float, int>>& mesh);
 
+    void getMesh(lvr2::HalfEdgeMesh<lvr2::ColorVertex<float, int>>& mesh);
 
      void getMesh(lvr2::MeshBuffer& mesh);
     /**
@@ -89,9 +92,12 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
     void setEdgeThreshold(float dist);
 
   	bool getContour(std::vector<int>& contour_indices);
+    //wahrscheinlich unnötig
+    //void fillContour(std::vector<int>& contour_indices, std::shared_ptr<lvr2::MeshBuffer>,std::vector<int>& fillup_indices);
 
-    void fillContour(std::vector<int>& contour_indices, std::shared_ptr<lvr2::MeshBuffer>,std::vector<int>& fillup_indices);
-  private:
+    void fillContour(std::vector<int>& contour_indices, lvr2::BaseMesh<lvr2::ColorVertex<float, int>>& mesh,std::vector<int>& fillup_indices);
+
+        private:
 
 	void normalize(int& x, int& y);
 

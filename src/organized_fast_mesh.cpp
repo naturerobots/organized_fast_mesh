@@ -95,7 +95,7 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
   //old version
   //lvr2::HalfEdgeMesh<VertexType, NormalType> hem;
 
-  lvr2::HalfEdgeMesh<lvr2::BaseVector<float>> hem;
+  lvr2::HalfEdgeMesh<lvr2::ColorVertex<float, int>> hem;
 
 
   ofmg.getMesh(hem);
@@ -106,11 +106,37 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
     ROS_INFO("base hole contour Size: %d", contour.size());
     ofmg.fillContour(contour, hem, fillup_indices);
   }
-  
-  hem.finalize();  
-  lvr2::MeshBufferPtr mesh_buffer = hem.meshBuffer();
+
+  //wahrscheinlich unnötig
+ // hem.finalize();
+ //Für Montag
+ //lvr2::MeshBufferPtr mesh_buffer = hem.meshBuffer();
+ lvr2::MeshBufferPtr mesh_buffer;
+ // auto iterator = hem.verticesBegin();
+
+  size_t num = hem.numVertices();
+
+ /* for (int i =0; i<num; i++)
+  {
+    auto Vec = hem.getVertexPosition(iterator.operator*());
+    lvr2::floatArr floatArr (new float [3]);
+
+    floatArr[0] = Vec.x;
+    floatArr[1] = Vec.y;
+    floatArr[2] = Vec.z;
+
+
+      mesh_buffer->setVertices(floatArr,3);
+
+  }
+
+
+
+
   //lvr_ros::removeDuplicates(*mesh_buffer);
-  bool success = lvr_ros::fromMeshBufferToTriangleMesh(mesh_buffer, mesh_msg.mesh);
+ // bool success = lvr_ros::fromMeshBufferToTriangleMesh(mesh_buffer, mesh_msg.mesh);
+*/
+ bool success= true;
 
   std_msgs::ColorRGBA std_color, con_color;
   con_color.r = 1;

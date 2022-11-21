@@ -54,7 +54,6 @@
 #include <pcl-1.10/pcl/sample_consensus/sac_model_plane.h>
 #include <pcl-1.10/pcl/filters/project_inliers.h>
 #include <pcl-1.10/pcl/surface/gp3.h>
-#include <lvr2/geometry/HalfEdgeMesh.hpp>
 #include <pcl-1.10/pcl/filters/extract_indices.h>
 #include <pcl-1.10/pcl/surface/marching_cubes_rbf.h>
 #include <lvr2/io/DataStruct.hpp>
@@ -65,9 +64,14 @@ OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(pcl::PointCloud<pcl::Poin
   setEdgeThreshold(0.5);
 }
 
-void OrganizedFastMeshGenerator::getMesh(lvr2::BaseMesh<float>& mesh){
-    vertices.clear();
-    mesh_points = pcl::PointCloud<pcl::PointNormal>::Ptr(new pcl::PointCloud<pcl::PointNormal>);
+
+
+
+void getMesh(lvr2::HalfEdgeMesh<lvr2::ColorVertex<float, int>>& mesh){
+    //TODO wie unten wenn möglich
+}
+
+void OrganizedFastMeshGenerator::getMesh(lvr2::BaseMesh<lvr2::ColorVertex<float, int>>& mesh) {
 }
 
 //TODO ob weglassen von Normalen schlimm ist Mesh für nOrmalen
@@ -477,7 +481,7 @@ inline void OrganizedFastMeshGenerator::normalize(int& x, int& y){
 
 
 
-void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, lvr2::MeshBufferPtr mesh,std::vector<int>& fillup_indices){
+void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, lvr2::BaseMesh<lvr2::ColorVertex<float, int>>& mesh,std::vector<int>& fillup_indices){
   std::vector<int>::iterator c_iter;
   std::map<int, int> hole_index_map;
 
@@ -558,8 +562,17 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
       arrSub_nor[1]=0;
       arrSub_nor[2]=1;
 
-      mesh->setVertices(arrSub_vec,1);
-      mesh->setVertexNormals(arrSub_nor);
+
+
+      //mesh->setVertices(arrSub_vec,1);
+      lvr2::ColorVertex<float,int> point (arrSub_vec[0],arrSub_vec[1],arrSub_vec[2]);
+      mesh.addVertex(point);
+
+
+      //no Normales ?????
+      //mesh->setVertexNormals(arrSub_nor);
+
+
 
       pcl::PointNormal pcl_sub;
       lvr2::ColorVertex<float,int> sub_vec(arrSub_vec[0],arrSub_vec[1],arrSub_vec[2]);
@@ -578,14 +591,23 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
     arrycentroid[1]=centroid.y;
     arrycentroid[2]=centroid.z;
 
-  mesh->setVertices(arrycentroid,1);
+  //mesh->setVertices(arrycentroid,1);
+  lvr2::ColorVertex<float,int> vertexcentroid (arrycentroid[0],arrycentroid[1],arrycentroid[2]);
+  mesh.addVertex(vertexcentroid);
+
+
   lvr2::floatArr arrySub_nor(new float[3]);
   arrySub_nor[0]=0;
   arrySub_nor[1]=0;
   arrySub_nor[2]=1;
 
+
+  //NORMALEN WEG !!!!
   lvr2::Normal<float> sub_nor (0,0,1);
-  mesh->setVertexNormals(arrySub_nor);
+  //mesh->setVertexNormals(arrySub_nor);
+
+
+
   pcl::PointNormal pcl_sub;
   lvrToPclVertex(centroid, sub_nor, pcl_sub);
   mesh_points->push_back(pcl_sub);
@@ -721,18 +743,22 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
   //Hope
 
   std::vector<lvr2::HalfEdgeVertex<lvr2::BaseVector<float>>>* mesh_vertices;
+  //TODay Work nach fragen
+  lvr2::Index index = mesh.nextVertexIndex();
+  size_t numVertieces = mesh.numVertices();
 
-  lvr2::floatArr floatArr = mesh->getVertices();
-
-  size_t numVertieces = mesh->numVertices();
 
   for (int i = 0; i <numVertieces;i++){
       lvr2::HalfEdgeVertex<lvr2::BaseVector<float>> halfEdge;
-      lvr2::BaseVector<float> baseVec;
-      baseVec.x = floatArr[i+0];
-      baseVec.y = floatArr[i+1];
-      baseVec.z = floatArr[i+2];
-      halfEdge.pos = baseVec;
+      lvr2::VertexHandle handler (index);
+
+
+
+      lvr2::ColorVertex<float, int> vertex = mesh.getVertexPosition(handler);
+
+
+
+      halfEdge.pos = vertex;
       mesh_vertices->push_back(halfEdge);
 
   }
@@ -778,9 +804,9 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
     triangleInd[1]=hole_triangles[i][1];
     triangleInd[2]=hole_triangles[i][3];
 
+    //Nicht mehr nötig ???
+    //mesh->setFaceIndices( triangleInd,3);
 
-      mesh->setFaceIndices(
-              triangleInd,3);
   }
 
 
