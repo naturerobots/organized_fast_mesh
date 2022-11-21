@@ -95,11 +95,11 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
     //wahrscheinlich unnötig
     //void fillContour(std::vector<int>& contour_indices, std::shared_ptr<lvr2::MeshBuffer>,std::vector<int>& fillup_indices);
 
-    void fillContour(std::vector<int>& contour_indices, lvr2::BaseMesh<lvr2::ColorVertex<float, int>>& mesh,std::vector<int>& fillup_indices);
+    void fillContour(std::vector<int>& contour_indices, lvr2::MeshBuffer& mesh,std::vector<int>& fillup_indices);
 
         private:
 
-	void normalize(int& x, int& y);
+	    void normalize(int& x, int& y);
 
     /**
      * \brief converts a pcl point into a lvr color vertex

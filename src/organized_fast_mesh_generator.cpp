@@ -481,7 +481,7 @@ inline void OrganizedFastMeshGenerator::normalize(int& x, int& y){
 
 
 
-void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, lvr2::BaseMesh<lvr2::ColorVertex<float, int>>& mesh,std::vector<int>& fillup_indices){
+void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, lvr2::MeshBuffer& mesh,std::vector<int>& fillup_indices){
   std::vector<int>::iterator c_iter;
   std::map<int, int> hole_index_map;
 
@@ -565,13 +565,12 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
 
 
       //mesh->setVertices(arrSub_vec,1);
-      lvr2::ColorVertex<float,int> point (arrSub_vec[0],arrSub_vec[1],arrSub_vec[2]);
-      mesh.addVertex(point);
+      mesh.setVertices(arrSub_vec,1);
+      mesh.setVertexNormals(arrSub_nor);
 
 
       //no Normales ?????
-      //mesh->setVertexNormals(arrSub_nor);
-
+      mesh.setVertexNormals(arrSub_nor);
 
 
       pcl::PointNormal pcl_sub;
@@ -591,10 +590,7 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
     arrycentroid[1]=centroid.y;
     arrycentroid[2]=centroid.z;
 
-  //mesh->setVertices(arrycentroid,1);
-  lvr2::ColorVertex<float,int> vertexcentroid (arrycentroid[0],arrycentroid[1],arrycentroid[2]);
-  mesh.addVertex(vertexcentroid);
-
+  mesh.setVertices(arrycentroid,1);
 
   lvr2::floatArr arrySub_nor(new float[3]);
   arrySub_nor[0]=0;
@@ -744,19 +740,20 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
 
   std::vector<lvr2::HalfEdgeVertex<lvr2::BaseVector<float>>>* mesh_vertices;
   //TODay Work nach fragen
-  lvr2::Index index = mesh.nextVertexIndex();
   size_t numVertieces = mesh.numVertices();
 
 
   for (int i = 0; i <numVertieces;i++){
       lvr2::HalfEdgeVertex<lvr2::BaseVector<float>> halfEdge;
-      lvr2::VertexHandle handler (index);
 
 
 
-      lvr2::ColorVertex<float, int> vertex = mesh.getVertexPosition(handler);
 
-
+      lvr2::floatArr floatArr = mesh.getVertices();
+      lvr2::BaseVector<float> vertex;
+      vertex.x=floatArr[0];
+      vertex.y=floatArr[0];
+      vertex.z=floatArr[0];
 
       halfEdge.pos = vertex;
       mesh_vertices->push_back(halfEdge);

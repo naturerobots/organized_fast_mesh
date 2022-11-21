@@ -95,8 +95,7 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
   //old version
   //lvr2::HalfEdgeMesh<VertexType, NormalType> hem;
 
-  lvr2::HalfEdgeMesh<lvr2::ColorVertex<float, int>> hem;
-
+  lvr2::MeshBuffer hem;
 
   ofmg.getMesh(hem);
 
@@ -132,11 +131,9 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
 
 
-
-  //lvr_ros::removeDuplicates(*mesh_buffer);
- // bool success = lvr_ros::fromMeshBufferToTriangleMesh(mesh_buffer, mesh_msg.mesh);
 */
- bool success= true;
+ bool success = lvr_ros::fromMeshBufferToTriangleMesh(mesh_buffer, mesh_msg.mesh);
+
 
   std_msgs::ColorRGBA std_color, con_color;
   con_color.r = 1;

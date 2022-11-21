@@ -49,6 +49,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include "organized_fast_mesh/OrganizedFastMeshSrv.h"
 #include <mesh_msgs/MeshTriangleIndices.h>
+#include <mesh_msgs/TriangleMeshStamped.h>
 
 class OrganizedFastMesh{
 
