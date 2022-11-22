@@ -63,9 +63,8 @@ typedef lvr2::Normal<float> NormalType;
 OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
   : nh_(nh)
 {
-    std::cout << "hallo1";
 
-    cloud_sub_ = nh_.subscribe("input_cloud", 20, &OrganizedFastMesh::pointCloud2Callback, this);
+    cloud_sub_ = nh_.subscribe("velodyne_points", 20, &OrganizedFastMesh::pointCloud2Callback, this);
 
 
   mesh_pub_ = nh_.advertise<mesh_msgs::MeshGeometryStamped>("organized_mesh", 1);
@@ -79,7 +78,6 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
 bool OrganizedFastMesh::generateOrganizedFastMesh(
   const sensor_msgs::PointCloud2& cloud, mesh_msgs::MeshGeometryStamped& mesh_msg)
 {
-    std::cout << "hallo2";
 
     if(cloud.height < 2){
     ROS_WARN("Received unorganized point cloud!");
@@ -183,13 +181,11 @@ bool OrganizedFastMesh::generateOrganizedFastMeshSrv(
   organized_fast_mesh::OrganizedFastMeshSrv::Request& req,
   organized_fast_mesh::OrganizedFastMeshSrv::Response& res)
 {
-    std::cout << "hallo3";
 
     return generateOrganizedFastMesh(req.organized_scan, res.organized_fast_mesh);
 }
 
 void OrganizedFastMesh::pointCloud2Callback(const sensor_msgs::PointCloud2::ConstPtr &cloud){
-    std::cout << "hallo4";
   mesh_msgs::MeshGeometryStamped mesh_msg;
   if(generateOrganizedFastMesh(*cloud, mesh_msg)){
     mesh_pub_.publish(mesh_msg);
