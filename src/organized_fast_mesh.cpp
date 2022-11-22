@@ -55,6 +55,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 
+
 typedef lvr2::ColorVertex<float, int> VertexType;
 typedef lvr2::Normal<float> NormalType;
 
@@ -62,8 +63,12 @@ typedef lvr2::Normal<float> NormalType;
 OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
   : nh_(nh)
 {
-  cloud_sub_ = nh_.subscribe("input_cloud", 20, &OrganizedFastMesh::pointCloud2Callback, this);
-  mesh_pub_ = nh_.advertise<mesh_msgs::TriangleMeshStamped>("organized_mesh", 1);
+    std::cout << "hallo1";
+
+    cloud_sub_ = nh_.subscribe("input_cloud", 20, &OrganizedFastMesh::pointCloud2Callback, this);
+
+
+  mesh_pub_ = nh_.advertise<mesh_msgs::MeshGeometryStamped>("organized_mesh", 1);
   service_ = nh_.advertiseService("organized_fast_mesh", &OrganizedFastMesh::generateOrganizedFastMeshSrv, this);
 
   ros::NodeHandle p_nh_("~");
@@ -72,9 +77,11 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
 
 }
 bool OrganizedFastMesh::generateOrganizedFastMesh(
-  const sensor_msgs::PointCloud2& cloud, mesh_msgs::TriangleMeshStamped& mesh_msg)
+  const sensor_msgs::PointCloud2& cloud, mesh_msgs::MeshGeometryStamped& mesh_msg)
 {
-  if(cloud.height < 2){
+    std::cout << "hallo2";
+
+    if(cloud.height < 2){
     ROS_WARN("Received unorganized point cloud!");
     return false;
   }
@@ -132,7 +139,7 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
 
 */
- bool success = lvr_ros::fromMeshBufferToTriangleMesh(mesh_buffer, mesh_msg.mesh);
+ bool success = lvr_ros::fromMeshBufferToTriangleMesh(mesh_buffer, mesh_msg.mesh_geometry);
 
 
   std_msgs::ColorRGBA std_color, con_color;
@@ -145,26 +152,26 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
   std_color.g = 1;
   std_color.b = 0.2;
   con_color.a = 1;
+  /*
+  mesh_msg.mesh_geometry.vertex_colors.resize(mesh_msg.mesh_geometry.vertices.size());
   
-  mesh_msg.mesh.vertex_colors.resize(mesh_msg.mesh.vertices.size());
-  
-  for(int i=0; i<mesh_msg.mesh.vertex_colors.size(); i++){
-	mesh_msg.mesh.vertex_colors[i] = std_color;
+  for(int i=0; i<mesh_msg.mesh_geometry.vertex_colors.size(); i++){
+	mesh_msg.mesh_geometry.vertex_colors[i] = std_color;
   }
 
   if(fillup_base_hole){
     for(int i=0; i<contour.size();i++){
-      mesh_msg.mesh.vertex_colors[contour[i]] = con_color;
+      mesh_msg.mesh_geometry.vertex_colors[contour[i]] = con_color;
     }
     for(int i=0; i<fillup_indices.size();i++){
-      mesh_msg.mesh.vertex_colors[fillup_indices[i]] = con_color;
+      mesh_msg.mesh_geometry.vertex_colors[fillup_indices[i]] = con_color;
     }
   }
-
+*/
   mesh_msg.header.frame_id = cloud.header.frame_id;
   mesh_msg.header.stamp = cloud.header.stamp;
   if(success){
-	ROS_INFO("Publish organized fast mesh in the %s frame with %d triangles, %d vertices and %d vertex normals", mesh_msg.header.frame_id.c_str(), mesh_msg.mesh.triangles.size(), mesh_msg.mesh.vertices.size(), mesh_msg.mesh.vertex_normals.size());
+	ROS_INFO("Publish organized fast mesh in the %s frame with %d triangles, %d vertices and %d vertex normals", mesh_msg.header.frame_id.c_str(), mesh_msg.mesh_geometry.faces.size(), mesh_msg.mesh_geometry.vertices.size(), mesh_msg.mesh_geometry.vertex_normals.size());
     return true;
   }else{
     ROS_ERROR("conversion from mesh buffer pointer to mesh_msgs::TriangleMeshStamped failed, can not publish organized mesh!");
@@ -176,20 +183,29 @@ bool OrganizedFastMesh::generateOrganizedFastMeshSrv(
   organized_fast_mesh::OrganizedFastMeshSrv::Request& req,
   organized_fast_mesh::OrganizedFastMeshSrv::Response& res)
 {
+    std::cout << "hallo3";
 
-  return generateOrganizedFastMesh(req.organized_scan, res.organized_fast_mesh);
+    return generateOrganizedFastMesh(req.organized_scan, res.organized_fast_mesh);
 }
 
 void OrganizedFastMesh::pointCloud2Callback(const sensor_msgs::PointCloud2::ConstPtr &cloud){
-  mesh_msgs::TriangleMeshStamped mesh_msg;
+    std::cout << "hallo4";
+  mesh_msgs::MeshGeometryStamped mesh_msg;
   if(generateOrganizedFastMesh(*cloud, mesh_msg)){
     mesh_pub_.publish(mesh_msg);
   }
 }
 
+void print (const mesh_msgs::MeshGeometryStamped msg){
+    ROS_INFO("I heard: ");
+
+}
+
 int main(int args, char** argv){
-  ros::init(args, argv, "organized_fast_mesh");
-  ros::NodeHandle nh;
-  OrganizedFastMesh ofm(nh);
-  ros::spin();
+    ros::init(args, argv, "organized_fast_mesh");
+    ros::NodeHandle nh;
+    OrganizedFastMesh ofm(nh);
+    ros::spin();
+
+
 }
