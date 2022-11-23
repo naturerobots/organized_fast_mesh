@@ -64,7 +64,7 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
   : nh_(nh)
 {
 
-    cloud_sub_ = nh_.subscribe("velodyne_points", 20, &OrganizedFastMesh::pointCloud2Callback, this);
+    cloud_sub_ = nh_.subscribe("/os_cloud_node/points", 20, &OrganizedFastMesh::pointCloud2Callback, this);
 
 
   mesh_pub_ = nh_.advertise<mesh_msgs::MeshGeometryStamped>("organized_mesh", 1);
@@ -96,7 +96,10 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 */
 
   OrganizedFastMeshGenerator ofmg(cloud_organized);
-  ofmg.setEdgeThreshold(edge_threshold);
+    ROS_INFO("size of cloud_organized: %d", cloud_organized.size());
+    ROS_INFO("size of pcloud: %d",cloud.height*cloud.width );
+
+    ofmg.setEdgeThreshold(edge_threshold);
   //old version
   //lvr2::HalfEdgeMesh<VertexType, NormalType> hem;
 
@@ -111,33 +114,7 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
     ofmg.fillContour(contour, hem, fillup_indices);
   }
 
-  //wahrscheinlich unnötig
- // hem.finalize();
- //Für Montag
- //lvr2::MeshBufferPtr mesh_buffer = hem.meshBuffer();
- lvr2::MeshBufferPtr mesh_buffer;
- // auto iterator = hem.verticesBegin();
-
-  size_t num = hem.numVertices();
-
- /* for (int i =0; i<num; i++)
-  {
-    auto Vec = hem.getVertexPosition(iterator.operator*());
-    lvr2::floatArr floatArr (new float [3]);
-
-    floatArr[0] = Vec.x;
-    floatArr[1] = Vec.y;
-    floatArr[2] = Vec.z;
-
-
-      mesh_buffer->setVertices(floatArr,3);
-
-  }
-
-
-
-*/
- bool success = lvr_ros::fromMeshBufferToTriangleMesh(mesh_buffer, mesh_msg.mesh_geometry);
+ bool success = lvr_ros::fromMeshBufferToTriangleMesh(hem, mesh_msg.mesh_geometry);
 
 
   std_msgs::ColorRGBA std_color, con_color;
