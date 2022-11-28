@@ -92,7 +92,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
     // also create an index map for the triangle creation
     boost::shared_array<float> arryPoint(new float[3*height*width]);
     boost::shared_array<float> arryNormal(new float[3*height*width]);
-
+ int deletpoints=0;
     for (uint32_t y = 0; y < height; y++) {
         for (uint32_t x = 0; x < width; x++) {
 
@@ -111,27 +111,34 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
                 // index maps to -1
                 index_map[index_map_index] = -1;
                 index_map_index++;
+                deletpoints ++;
             } else { // if the point exists (not nan)
                 // index maps to existing vertex in the mesh
                 index_map[index_map_index] = index_cnt;
                 index_map_index++;
                 index_cnt++;
-                arryPoint[x*y+0] = point.x;
-                arryPoint[x*y+1] = point.y;
-                arryPoint[x*y+2] = point.z;
 
-                arryNormal[x*y+0] = normal.x;
-                arryNormal[x*y+0] = normal.y;
-                arryNormal[x*y+0] = normal.z;
+                if(point.x ==0 && point.z ==0 && point.y==0){
+                    deletpoints ++;
+                }
+                else {
+                    arryPoint[x * y + 0] = point.x;
+                    arryPoint[x * y + 1] = point.y;
+                    arryPoint[x * y + 2] = point.z;
+
+                    arryNormal[x * y + 0] = normal.x;
+                    arryNormal[x * y + 0] = normal.y;
+                    arryNormal[x * y + 0] = normal.z;
 
 
-                mesh_points->push_back(p_pcl);
+                    mesh_points->push_back(p_pcl);
 
-                vertices.push_back(point);
+                    vertices.push_back(point);
+                }
             }
         }
     }
-    mesh.setVertices(arryPoint, height*width);
+    mesh.setVertices(arryPoint, height*width-deletpoints);
     mesh.setVertexNormals(arryNormal);
 
 
