@@ -71,13 +71,18 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
   service_ = nh_.advertiseService("organized_fast_mesh", &OrganizedFastMesh::generateOrganizedFastMeshSrv, this);
 
   ros::NodeHandle p_nh_("~");
-  p_nh_.param("edge_threshold", edge_threshold, 0.5);
+  p_nh_.param("edge_threshold", edge_threshold,0.5);
   p_nh_.param("fillup_base_hole", fillup_base_hole, false);
 
 }
 bool OrganizedFastMesh::generateOrganizedFastMesh(
   const sensor_msgs::PointCloud2& cloud, mesh_msgs::MeshGeometryStamped& mesh_msg)
 {
+
+
+
+
+
 
     if(cloud.height < 2){
     ROS_WARN("Received unorganized point cloud!");
@@ -96,10 +101,10 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 */
 
   OrganizedFastMeshGenerator ofmg(cloud_organized);
-    ROS_INFO("size of cloud_organized: %d", cloud_organized.size());
-    ROS_INFO("size of pcloud: %d",cloud.height*cloud.width );
+  ROS_INFO("size of cloud_organized: %d", cloud_organized.size());
+  ROS_INFO("size of pcloud: %d",cloud.height*cloud.width );
 
-    ofmg.setEdgeThreshold(edge_threshold);
+  ofmg.setEdgeThreshold(edge_threshold);
   //old version
   //lvr2::HalfEdgeMesh<VertexType, NormalType> hem;
 
@@ -142,9 +147,19 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
       mesh_msg.mesh_geometry.vertex_colors[fillup_indices[i]] = con_color;
     }
   }
+
+
 */
-  mesh_msg.header.frame_id = cloud.header.frame_id;
-  mesh_msg.header.stamp = cloud.header.stamp;
+  /*
+    for(int i =0; i<mesh_msg.mesh_geometry.faces.size();i++){
+        ROS_INFO("%d", mesh_msg.mesh_geometry.faces[i]);
+        if( i%3==0){
+            ROS_INFO("new face");
+
+        }
+    }
+*/
+
   if(success){
 	ROS_INFO("Publish organized fast mesh in the %s frame with %d triangles, %d vertices and %d vertex normals", mesh_msg.header.frame_id.c_str(), mesh_msg.mesh_geometry.faces.size(), mesh_msg.mesh_geometry.vertices.size(), mesh_msg.mesh_geometry.vertex_normals.size());
     return true;

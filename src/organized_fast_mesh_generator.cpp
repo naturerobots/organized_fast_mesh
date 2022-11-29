@@ -90,24 +90,20 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
 
     // add all vertices and normals to the mesh
     // also create an index map for the triangle creation
-    boost::shared_array<float> arryPoint(new float[3*height*width]);
-    boost::shared_array<float> arryNormal(new float[3*height*width]);
- int deletpoints=0;
+    std::vector<float> vecPoint;
+    std::vector<float> vecNormal;
+
+
+    int deletpoints=0;
     for (uint32_t y = 0; y < height; y++) {
         for (uint32_t x = 0; x < width; x++) {
-
             lvr2::ColorVertex<float, int> point; // point at (x,y)
-
-
-
-
             lvr2::Normal<float> normal; // normal at (x,y);
             // get the point at (x,y)
             pcl::PointNormal p_pcl = organized_scan(x, y);
-
             pclToLvrVertex(p_pcl, point);
             pclToLvrNormal(p_pcl, normal);
-            if (!pointExists(point) || !normalExists(normal)) {
+            if (!pointExists(point) || !normalExists(normal) ||(point.x ==0 && point.z ==0 && point.y==0) ){
                 // index maps to -1
                 index_map[index_map_index] = -1;
                 index_map_index++;
@@ -117,35 +113,35 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
                 index_map[index_map_index] = index_cnt;
                 index_map_index++;
                 index_cnt++;
+                vecPoint.push_back(point.x);
+                vecPoint.push_back(point.y);
+                vecPoint.push_back(point.z);
+                vecNormal.push_back(normal.x);
+                vecNormal.push_back(normal.y);
+                vecNormal.push_back(normal.z);
+                mesh_points->push_back(p_pcl);
+                vertices.push_back(point);
 
-                if(point.x ==0 && point.z ==0 && point.y==0){
-                    deletpoints ++;
-                }
-                else {
-                    arryPoint[x * y + 0] = point.x;
-                    arryPoint[x * y + 1] = point.y;
-                    arryPoint[x * y + 2] = point.z;
-
-                    arryNormal[x * y + 0] = normal.x;
-                    arryNormal[x * y + 0] = normal.y;
-                    arryNormal[x * y + 0] = normal.z;
-
-
-                    mesh_points->push_back(p_pcl);
-
-                    vertices.push_back(point);
-                }
             }
         }
     }
-    mesh.setVertices(arryPoint, height*width-deletpoints);
+
+
+    boost::shared_array<float> arryPoint(new float[vecPoint.size()]);
+    boost::shared_array<float> arryNormal(new float[vecNormal.size()]);
+    for (int i=0;i<vecPoint.size();i++){
+        arryPoint[i]=vecPoint[i];
+        arryNormal[i]=vecNormal[i];
+
+    }
+
+    mesh.setVertices(arryPoint,vecPoint.size()/3 );
     mesh.setVertexNormals(arryNormal);
 
 
 
     // start adding faces to the mesh
     std::vector<unsigned int> triangleIndexVec;
-
     for (uint32_t y = 0; y < height; y++) {
         for (uint32_t x = 0; x < width; x++) {
 
@@ -170,43 +166,58 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
             //    .   .             .___.
             //
 
+
+
             // create top triangle if all vertices exists
-            if (idx != -1 && idx_rb != -1 && idx_r != -1) {
+            if (idx != -1 && idx_rb  != -1 && idx_r  != -1) {
                 // check if there are longer edges then the threshold
                 if (!hasLongEdge(idx, idx_rb, idx_r, sqr_edge_threshold)) {
 
-                    triangleIndexVec.push_back(idx);
-                    triangleIndexVec.push_back(idx_rb);
-                    triangleIndexVec.push_back(idx_r);
+                    if(idx!=idx_rb && idx!= idx_r && idx_rb!=idx_r) {
+                        //if(noDublicat(idx,idx_rb,idx_r,triangleIndexVec)) {
+
+
+                            triangleIndexVec.push_back(idx);
+                            triangleIndexVec.push_back(idx_rb);
+                            triangleIndexVec.push_back(idx_r);
+                        //}
+                    }
 
                 }
                 // create bottom triangle if all vertices exists
-                if (idx != -1 && idx_b != -1 && idx_rb != -1) {
+                if (idx  != -1 && idx_b  != -1 && idx_rb  != -1) {
                     // check if there are longer edges then the threshold
                     if (!hasLongEdge(idx, idx_b, idx_rb, sqr_edge_threshold)) {
 
+                        if(idx!=idx_b &&idx!= idx_rb && idx_b!=idx_rb)
+                        {
+                           // if(noDublicat(idx,idx_b,idx_rb,triangleIndexVec)) {
 
-
-                        triangleIndexVec.push_back(idx);
-                        triangleIndexVec.push_back(idx_b);
-                        triangleIndexVec.push_back(idx_rb);
+                                triangleIndexVec.push_back(idx);
+                                triangleIndexVec.push_back(idx_b);
+                                triangleIndexVec.push_back(idx_rb);
+                            //}
+                        }
                     }
                 }
             }
 
 
-            // finalize the mesh for the MeshBufferPointer
-            //TODO warum??
-            //mesh.finalize();
         }
     }
     boost::shared_array<unsigned int> triangleIndex(new unsigned int[triangleIndexVec.size()]);
-    for(int i=0;i<triangleIndexVec.size();i++){
+
+
+    ROS_INFO("size of vec: %d",triangleIndexVec.size()/3);
+
+    for(int i =0;i<triangleIndexVec.size();i++){
         triangleIndex[i]=triangleIndexVec[i];
     }
-    ROS_INFO("size of vec: %d",triangleIndexVec.size()/3);
+
     mesh.setFaceIndices(triangleIndex,triangleIndexVec.size()/3);
 }
+
+
 
 bool OrganizedFastMeshGenerator::getContour(std::vector<int>& contour_indices){
   // fill up robot shadow in the mesh
@@ -357,6 +368,56 @@ bool OrganizedFastMeshGenerator::findContour(std::map<int, int>& index_map, std:
     normalize(x, y);
   }
 }
+
+
+
+bool OrganizedFastMeshGenerator::noDublicat(int a, int b, int c, std::vector<unsigned int> vec){
+    int size=vec.size();
+    for(int i=0;i<size;i=i+3){
+        if(vec[i]==a){
+            if(vec[i+1]==b) {
+                if (vec[i + 2] == c) {
+                    return false;
+                }
+            }
+            if(vec[i+1]==c) {
+                if (vec[i + 2] == b) {
+                    return false;
+                }
+            }
+
+        }
+        if(vec[i]==b){
+            if(vec[i+1]==c) {
+                if (vec[i + 2] == a) {
+                    return false;
+                }
+            }
+            if(vec[i+1]==a) {
+                if (vec[i + 2] == c) {
+                    return false;
+                }
+            }
+
+        }
+        if(vec[i]==c){
+            if(vec[i+1]==a) {
+                if (vec[i + 2] == b) {
+                    return false;
+                }
+            }
+            if(vec[i+1]==b) {
+                if (vec[i + 2] == a) {
+                    return false;
+                }
+            }
+
+        }
+
+    }
+    return true;
+}
+
 
 inline bool OrganizedFastMeshGenerator::isValid(int x, int y){
   const int height = organized_scan.height;
