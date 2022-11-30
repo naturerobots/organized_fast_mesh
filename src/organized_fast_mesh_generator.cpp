@@ -95,7 +95,6 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
     std::vector<float> vecNormal;
 
 
-    int deletpoints=0;
     for (uint32_t y = 0; y < height; y++) {
         for (uint32_t x = 0; x < width; x++) {
             lvr2::ColorVertex<float, int> point; // point at (x,y)
@@ -108,7 +107,6 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
                 // index maps to -1
                 index_map[index_map_index] = -1;
                 index_map_index++;
-                deletpoints ++;
             } else { // if the point exists (not nan)
                 // index maps to existing vertex in the mesh
                 index_map[index_map_index] = index_cnt;
@@ -133,7 +131,6 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
     for (int i=0;i<vecPoint.size();i++){
         arryPoint[i]=vecPoint[i];
         arryNormal[i]=vecNormal[i];
-
     }
 
     mesh.setVertices(arryPoint,vecPoint.size()/3 );
@@ -144,8 +141,8 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
     // start adding faces to the mesh
     std::unordered_map<long, int> hashtable;
     std::vector<unsigned int> triangleIndexVec;
-    for (uint32_t y = 0; y < height; y++) {
-        for (uint32_t x = 0; x < width; x++) {
+    for (uint32_t y = 0; y < height-1; y++) {
+        for (uint32_t x = 0; x < width-1; x++) {
 
             // get indices around the borders for a 360 degree view
             uint32_t x_right = (x == width - 1) ? 0 : x + 1;
@@ -175,10 +172,10 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
                 // check if there are longer edges then the threshold
                 if (!hasLongEdge(idx, idx_rb, idx_r, sqr_edge_threshold)) {
 
-                    if(idx!=idx_rb && idx!= idx_r && idx_rb!=idx_r) {
-                       long hash= calculateHash(idx,idx_rb,idx_r,vecPoint.size()/3);
-                        bool noPermotation=hashtable.insert({hash,triangleIndexVec.size()}).second;
-                        if(noPermotation){
+                    if (idx != idx_rb && idx != idx_r && idx_rb != idx_r) {
+                        long hash = calculateHash(idx, idx_rb, idx_r, vecPoint.size() / 3);
+                        bool noPermotation = hashtable.insert({hash, triangleIndexVec.size()}).second;
+                        if (noPermotation) {
                             triangleIndexVec.push_back(idx);
                             triangleIndexVec.push_back(idx_rb);
                             triangleIndexVec.push_back(idx_r);
@@ -186,6 +183,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
                     }
 
                 }
+            }
                 // create bottom triangle if all vertices exists
                 if (idx  != -1 && idx_b  != -1 && idx_rb  != -1 ) {
                     // check if there are longer edges then the threshold
@@ -208,7 +206,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
 
 
         }
-    }
+
     boost::shared_array<unsigned int> triangleIndex(new unsigned int[triangleIndexVec.size()]);
 
 

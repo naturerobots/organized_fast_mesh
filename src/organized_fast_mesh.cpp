@@ -78,7 +78,8 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
 bool OrganizedFastMesh::generateOrganizedFastMesh(
   const sensor_msgs::PointCloud2& cloud, mesh_msgs::MeshGeometryStamped& mesh_msg)
 {
-    /*
+
+/*
     sensor_msgs::PointCloud2 cloud;
     cloud.header = cloudtest.header;
 
@@ -108,10 +109,10 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
     cloud.point_step = 3 * sizeof(float);
     // insert 5 point in pcl
 
-    cloud.width = 2;
-    cloud.height = 2;
+    cloud.width =3;
+    cloud.height = 3;
     cloud.row_step = cloud.width * cloud.point_step;
-    cloud.data.resize(cloud.point_step * 5);
+    cloud.data.resize(cloud.row_step *  cloud.height);
 
     // reinterpret byte memory as float memory
     float* data_raw = reinterpret_cast<float*>(&cloud.data[0]);
@@ -123,24 +124,44 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
     // ...
 
     data_raw[0] = 1.0;
-    data_raw[1] = 1.0;
+    data_raw[1] = -1.0;
     data_raw[2] = 0.0;
 
     data_raw[3] = 1.0;
-    data_raw[4] = 0.5;
+    data_raw[4] = 1.0;
     data_raw[5] = 0.0;
 
-    data_raw[6] = 0.5;
+    data_raw[6] = 0.0;
     data_raw[7] = 0.0;
     data_raw[8] = 0.0;
 
     data_raw[9] = 0.0;
-    data_raw[10] = -0.5;
+    data_raw[10] = 0.0;
     data_raw[11] = 0.0;
+
+
+    data_raw[12] = -1.0;
+    data_raw[13] = 1.0;
+    data_raw[14] = 0.0;
+
+    data_raw[15] = -1.0;
+    data_raw[16] = 2.0;
+    data_raw[17] = 0.0;
+
+    data_raw[18] = -3.0;
+    data_raw[19] = -1.0;
+    data_raw[20] = 0.0;
+
+
+    data_raw[21] = -3.0;
+    data_raw[22] = 1.0;
+    data_raw[23] = 0.0;
+
+    data_raw[24] = -3.0;
+    data_raw[25] = 2.0;
+    data_raw[26] = 0.0;
+
 */
-
-
-
 
 
 
@@ -182,7 +203,7 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
  bool success = lvr_ros::fromMeshBufferToTriangleMesh(hem, mesh_msg.mesh_geometry);
 
-
+  mesh_msg.header=cloud.header;
   std_msgs::ColorRGBA std_color, con_color;
   con_color.r = 1;
   con_color.g = 0.2;
