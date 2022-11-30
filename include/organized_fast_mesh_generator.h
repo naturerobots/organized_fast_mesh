@@ -159,7 +159,7 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
      * \brief tests if the face has long edges
      */
 
-    bool noDublicat(int a, int b, int c, std::vector<unsigned int> vec);
+    long calculateHash(int a, int b, int c,int maxsize);
 
     bool hasLongEdge(int a, int b, int c, float sqr_edge_threshold);
 

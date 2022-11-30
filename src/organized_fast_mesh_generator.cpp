@@ -55,6 +55,7 @@
 #include <lvr2/io/DataStruct.hpp>
 #include <ros/ros.h>
 #include <vector>
+#include <math.h>
 
 
 OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(pcl::PointCloud<pcl::PointNormal>& organized_scan)
@@ -141,6 +142,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
 
 
     // start adding faces to the mesh
+    std::unordered_map<long, int> hashtable;
     std::vector<unsigned int> triangleIndexVec;
     for (uint32_t y = 0; y < height; y++) {
         for (uint32_t x = 0; x < width; x++) {
@@ -174,29 +176,31 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
                 if (!hasLongEdge(idx, idx_rb, idx_r, sqr_edge_threshold)) {
 
                     if(idx!=idx_rb && idx!= idx_r && idx_rb!=idx_r) {
-                        //if(noDublicat(idx,idx_rb,idx_r,triangleIndexVec)) {
-
-
+                       long hash= calculateHash(idx,idx_rb,idx_r,vecPoint.size()/3);
+                        bool noPermotation=hashtable.insert({hash,triangleIndexVec.size()}).second;
+                        if(noPermotation){
                             triangleIndexVec.push_back(idx);
                             triangleIndexVec.push_back(idx_rb);
                             triangleIndexVec.push_back(idx_r);
-                        //}
+                        }
                     }
 
                 }
                 // create bottom triangle if all vertices exists
-                if (idx  != -1 && idx_b  != -1 && idx_rb  != -1) {
+                if (idx  != -1 && idx_b  != -1 && idx_rb  != -1 ) {
                     // check if there are longer edges then the threshold
                     if (!hasLongEdge(idx, idx_b, idx_rb, sqr_edge_threshold)) {
 
                         if(idx!=idx_b &&idx!= idx_rb && idx_b!=idx_rb)
                         {
-                           // if(noDublicat(idx,idx_b,idx_rb,triangleIndexVec)) {
-
+                            long hash =calculateHash(idx,idx_b,idx_rb,vecPoint.size()/3);
+                            bool noPermotation=hashtable.insert({hash,triangleIndexVec.size()}).second;
+                            if(noPermotation) {
                                 triangleIndexVec.push_back(idx);
                                 triangleIndexVec.push_back(idx_b);
                                 triangleIndexVec.push_back(idx_rb);
-                            //}
+                            }
+
                         }
                     }
                 }
@@ -371,51 +375,17 @@ bool OrganizedFastMeshGenerator::findContour(std::map<int, int>& index_map, std:
 
 
 
-bool OrganizedFastMeshGenerator::noDublicat(int a, int b, int c, std::vector<unsigned int> vec){
-    int size=vec.size();
-    for(int i=0;i<size;i=i+3){
-        if(vec[i]==a){
-            if(vec[i+1]==b) {
-                if (vec[i + 2] == c) {
-                    return false;
-                }
-            }
-            if(vec[i+1]==c) {
-                if (vec[i + 2] == b) {
-                    return false;
-                }
-            }
+long OrganizedFastMeshGenerator::calculateHash(int a, int b, int c,int maxsize){
 
-        }
-        if(vec[i]==b){
-            if(vec[i+1]==c) {
-                if (vec[i + 2] == a) {
-                    return false;
-                }
-            }
-            if(vec[i+1]==a) {
-                if (vec[i + 2] == c) {
-                    return false;
-                }
-            }
+    int arr[] ={a,b,c};
+    int n = sizeof(arr) / sizeof(arr[0]);
+    sort(arr,arr+n);
+    int big=arr[2];
+    int middel=arr[1];
+    int small=arr[0];
 
-        }
-        if(vec[i]==c){
-            if(vec[i+1]==a) {
-                if (vec[i + 2] == b) {
-                    return false;
-                }
-            }
-            if(vec[i+1]==b) {
-                if (vec[i + 2] == a) {
-                    return false;
-                }
-            }
+    return big * pow(maxsize,2) + middel* maxsize+small;
 
-        }
-
-    }
-    return true;
 }
 
 
