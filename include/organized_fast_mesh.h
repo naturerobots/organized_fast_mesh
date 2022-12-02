@@ -51,6 +51,7 @@
 #include <mesh_msgs/MeshTriangleIndices.h>
 #include <mesh_msgs/MeshGeometryStamped.h>
 
+
 class OrganizedFastMesh{
 
 public:

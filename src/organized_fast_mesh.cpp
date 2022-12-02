@@ -79,89 +79,7 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
   const sensor_msgs::PointCloud2& cloud, mesh_msgs::MeshGeometryStamped& mesh_msg)
 {
 
-/*
-    sensor_msgs::PointCloud2 cloud;
-    cloud.header = cloudtest.header;
 
-    // describe the bytes
-    sensor_msgs::PointField field_x;
-    field_x.name = "x";
-    field_x.offset = 0 * sizeof(float);
-    field_x.datatype = sensor_msgs::PointField::FLOAT32;
-    field_x.count = 1;
-
-    sensor_msgs::PointField field_y;
-    field_y.name = "y";
-    field_y.offset = 1 * sizeof(float);
-    field_y.datatype = sensor_msgs::PointField::FLOAT32;
-    field_y.count = 1;
-
-    sensor_msgs::PointField field_z;
-    field_z.name = "z";
-    field_z.offset = 2 * sizeof(float);
-    field_z.datatype = sensor_msgs::PointField::FLOAT32;
-    field_z.count = 1;
-
-    cloud.fields.push_back(field_x);
-    cloud.fields.push_back(field_y);
-    cloud.fields.push_back(field_z);
-
-    cloud.point_step = 3 * sizeof(float);
-    // insert 5 point in pcl
-
-    cloud.width =3;
-    cloud.height = 3;
-    cloud.row_step = cloud.width * cloud.point_step;
-    cloud.data.resize(cloud.row_step *  cloud.height);
-
-    // reinterpret byte memory as float memory
-    float* data_raw = reinterpret_cast<float*>(&cloud.data[0]);
-
-    // data_raw[0] = X0
-    // data_raw[1] = Y0
-    // data_raw[2] = Z0
-    // data_raw[3] = X1
-    // ...
-
-    data_raw[0] = 1.0;
-    data_raw[1] = -1.0;
-    data_raw[2] = 0.0;
-
-    data_raw[3] = 1.0;
-    data_raw[4] = 1.0;
-    data_raw[5] = 0.0;
-
-    data_raw[6] = 0.0;
-    data_raw[7] = 0.0;
-    data_raw[8] = 0.0;
-
-    data_raw[9] = 0.0;
-    data_raw[10] = 0.0;
-    data_raw[11] = 0.0;
-
-
-    data_raw[12] = -1.0;
-    data_raw[13] = 1.0;
-    data_raw[14] = 0.0;
-
-    data_raw[15] = -1.0;
-    data_raw[16] = 2.0;
-    data_raw[17] = 0.0;
-
-    data_raw[18] = -3.0;
-    data_raw[19] = -1.0;
-    data_raw[20] = 0.0;
-
-
-    data_raw[21] = -3.0;
-    data_raw[22] = 1.0;
-    data_raw[23] = 0.0;
-
-    data_raw[24] = -3.0;
-    data_raw[25] = 2.0;
-    data_raw[26] = 0.0;
-
-*/
 
 
 
@@ -203,7 +121,10 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
  bool success = lvr_ros::fromMeshBufferToTriangleMesh(hem, mesh_msg.mesh_geometry);
 
-  mesh_msg.header=cloud.header;
+  mesh_msg.header.frame_id = cloud.header.frame_id;
+  mesh_msg.header.stamp = cloud.header.stamp;
+
+
   std_msgs::ColorRGBA std_color, con_color;
   con_color.r = 1;
   con_color.g = 0.2;
@@ -214,33 +135,29 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
   std_color.g = 1;
   std_color.b = 0.2;
   con_color.a = 1;
+
+
+  //mesh_msg.mesh_geometry.vertex_colors.resize(mesh_msg.mesh_geometry.vertices.size());
   /*
-  mesh_msg.mesh_geometry.vertex_colors.resize(mesh_msg.mesh_geometry.vertices.size());
-  
-  for(int i=0; i<mesh_msg.mesh_geometry.vertex_colors.size(); i++){
-	mesh_msg.mesh_geometry.vertex_colors[i] = std_color;
+  std::vector<std_msgs::ColorRGBA> vertex_colors;
+
+  for(int i=0; i<hem.numVertices(); i++){
+	vertex_colors[i] = std_color;
   }
 
   if(fillup_base_hole){
     for(int i=0; i<contour.size();i++){
-      mesh_msg.mesh_geometry.vertex_colors[contour[i]] = con_color;
+        vertex_colors[contour[i]] = con_color;
     }
     for(int i=0; i<fillup_indices.size();i++){
-      mesh_msg.mesh_geometry.vertex_colors[fillup_indices[i]] = con_color;
+      vertex_colors[fillup_indices[i]] = con_color;
     }
   }
-
-
 */
-  /*
-    for(int i =0; i<mesh_msg.mesh_geometry.faces.size();i++){
-        ROS_INFO("%d", mesh_msg.mesh_geometry.faces[i]);
-        if( i%3==0){
-            ROS_INFO("new face");
 
-        }
-    }
-*/
+
+
+
 
   if(success){
 	ROS_INFO("Publish organized fast mesh in the %s frame with %d triangles, %d vertices and %d vertex normals", mesh_msg.header.frame_id.c_str(), mesh_msg.mesh_geometry.faces.size(), mesh_msg.mesh_geometry.vertices.size(), mesh_msg.mesh_geometry.vertex_normals.size());

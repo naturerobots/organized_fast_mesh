@@ -83,6 +83,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
     uint32_t width = organized_scan.width;
     uint32_t height = organized_scan.height;
 
+    
     index_map_index = 0;
     int index_cnt = 0;
 
@@ -95,12 +96,14 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
     std::vector<float> vecNormal;
 
 
-    for (uint32_t y = 0; y < height; y++) {
-        for (uint32_t x = 0; x < width; x++) {
+    for (uint32_t x = 0; x < width; x++) {
+        for (uint32_t y = 0; y < height; y++) {
             lvr2::ColorVertex<float, int> point; // point at (x,y)
             lvr2::Normal<float> normal; // normal at (x,y);
             // get the point at (x,y)
             pcl::PointNormal p_pcl = organized_scan(x, y);
+
+
             pclToLvrVertex(p_pcl, point);
             pclToLvrNormal(p_pcl, normal);
             if (!pointExists(point) || !normalExists(normal) ||(point.x ==0 && point.z ==0 && point.y==0) ){
@@ -141,8 +144,8 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
     // start adding faces to the mesh
     std::unordered_map<long, int> hashtable;
     std::vector<unsigned int> triangleIndexVec;
-    for (uint32_t y = 0; y < height-1; y++) {
-        for (uint32_t x = 0; x < width-1; x++) {
+    for (uint32_t x = 0; x < width; x++) {
+        for (uint32_t y = 0; y < height; y++) {
 
             // get indices around the borders for a 360 degree view
             uint32_t x_right = (x == width - 1) ? 0 : x + 1;
@@ -152,6 +155,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
 
 
             int idx = index_map[toIndex(x, y)];
+
             int idx_r = index_map[toIndex(x_right, y)];
             int idx_rb = index_map[toIndex(x_right, y_bottom)];
             int idx_b = index_map[toIndex(x, y_bottom)];
@@ -172,15 +176,13 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
                 // check if there are longer edges then the threshold
                 if (!hasLongEdge(idx, idx_rb, idx_r, sqr_edge_threshold)) {
 
-                    if (idx != idx_rb && idx != idx_r && idx_rb != idx_r) {
-                        long hash = calculateHash(idx, idx_rb, idx_r, vecPoint.size() / 3);
-                        bool noPermotation = hashtable.insert({hash, triangleIndexVec.size()}).second;
-                        if (noPermotation) {
+                     //   long hash = calculateHash(idx, idx_rb, idx_r, vecPoint.size() / 3);
+                       // bool noPermotation = hashtable.insert({hash, triangleIndexVec.size()}).second;
+                       // if (noPermotation) {
                             triangleIndexVec.push_back(idx);
                             triangleIndexVec.push_back(idx_rb);
                             triangleIndexVec.push_back(idx_r);
-                        }
-                    }
+
 
                 }
             }
@@ -189,17 +191,16 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
                     // check if there are longer edges then the threshold
                     if (!hasLongEdge(idx, idx_b, idx_rb, sqr_edge_threshold)) {
 
-                        if(idx!=idx_b &&idx!= idx_rb && idx_b!=idx_rb)
-                        {
-                            long hash =calculateHash(idx,idx_b,idx_rb,vecPoint.size()/3);
-                            bool noPermotation=hashtable.insert({hash,triangleIndexVec.size()}).second;
-                            if(noPermotation) {
+
+                            //long hash =calculateHash(idx,idx_b,idx_rb,vecPoint.size()/3);
+                           // bool noPermotation=hashtable.insert({hash,triangleIndexVec.size()}).second;
+                           // if(noPermotation) {
                                 triangleIndexVec.push_back(idx);
                                 triangleIndexVec.push_back(idx_b);
                                 triangleIndexVec.push_back(idx_rb);
-                            }
+                            //}
 
-                        }
+
                     }
                 }
             }
@@ -475,6 +476,12 @@ inline bool OrganizedFastMeshGenerator::pointExists(lvr2::ColorVertex<float, int
     boost::math::isfinite<float>(vertex.z);
 }
 
+inline bool OrganizedFastMeshGenerator::pointExists(lvr2::BaseVector<float>& vertex){
+    return
+            boost::math::isfinite<float>(vertex.x) &&
+            boost::math::isfinite<float>(vertex.y) &&
+            boost::math::isfinite<float>(vertex.z);
+}
 
 
 inline bool OrganizedFastMeshGenerator::normalExists(lvr2::Normal<float>& normal){
@@ -524,6 +531,8 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
     std::vector<int> tmp_indices;
     int a, b;
     for(int i=0; i<clean_indices.size()-2;i++){
+
+
       a = clean_indices[i];
       b = clean_indices[i+2];
       tmp_indices.push_back(a);
@@ -648,8 +657,8 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
   inner_contour.push_back(new_index);
   hole_indices.push_back(inner_contour);
 
-
-  for(int j=0; j< hole_indices.size()-2; j++){
+    //dirty
+  for(int j=0; j< hole_indices.size()-3; j++){
     int n_j0 = hole_indices[j+0].size();
     int n_j1 = hole_indices[j+1].size();
 
@@ -751,63 +760,38 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
   proj.setModelCoefficients (coefficients);
   proj.filter (*mesh_points);
 
-  /*
-     pcl::MovingLeastSquares<pcl::PointNormal, pcl::PointNormal> mls;
-     mls.setComputeNormals (false);
-     mls.setInputCloud (pcl_cloud);
-     mls.setIndices(radius_indices);
-     mls.setPolynomialFit (true);
-     mls.setSearchMethod (tree);
-     mls.setSearchRadius (0.3);
-     mls.process(*mls_points);
-   */
 
 
-  //TODO Klaren wie WICHTIG BEI PROBLEMEN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  /*old
-  lvr2::HalfEdgeMesh<BaseVector<float>>* h_mesh;
-  h_mesh = static_cast<lvr2::HalfEdgeMesh<BaseVector<float>>*> (&mesh);
-  std::vector<lvr2::HalfEdgeVertex<lvr::ColorVertex<float, int>, lvr::Normal<float> >* >& mesh_vertices = h_mesh->getVertices();
-  */
-
-  //Hope
-
-  std::vector<lvr2::HalfEdgeVertex<lvr2::BaseVector<float>>>* mesh_vertices;
-  //TODay Work nach fragen
+  std::vector<lvr2::HalfEdgeVertex<lvr2::BaseVector<float>>> mesh_vertices;
   size_t numVertieces = mesh.numVertices();
+  lvr2::floatArr floatArr = mesh.getVertices();
 
-
-  for (int i = 0; i <numVertieces;i++){
+    //mesh_vertieces=mesh.getVertices
+    for (int i = 0; i <numVertieces;i++){
       lvr2::HalfEdgeVertex<lvr2::BaseVector<float>> halfEdge;
 
-
-
-
-      lvr2::floatArr floatArr = mesh.getVertices();
       lvr2::BaseVector<float> vertex;
-      vertex.x=floatArr[0];
-      vertex.y=floatArr[0];
-      vertex.z=floatArr[0];
+      vertex.x=floatArr[i+0];
+      vertex.y=floatArr[i+1];
+      vertex.z=floatArr[i+2];
 
       halfEdge.pos = vertex;
-      mesh_vertices->push_back(halfEdge);
-
+      mesh_vertices.push_back(halfEdge);
   }
-  /* OLD VERSEION ALTERNATIVE DAFÜR MIT Normalen möglich ???
+
+  // OLD VERSEION ALTERNATIVE DAFÜR MIT Normalen möglich ???
   for(int i=0; i< inliers->indices.size(); i++){
     int index = inliers->indices[i];
-    mesh_vertices[index]->m_position.x = (*mesh_points)[index].x;
-    mesh_vertices[index]->m_position.y = (*mesh_points)[index].y;
-    mesh_vertices[index]->m_position.z = (*mesh_points)[index].z;
-    mesh_vertices[index]->m_normal.x = hole_normal.x;
-    mesh_vertices[index]->m_normal.y = hole_normal.y;
-    mesh_vertices[index]->m_normal.z = hole_normal.z;
+    mesh_vertices[index].pos.x = (*mesh_points)[index].x;
+    mesh_vertices[index].pos.y = (*mesh_points)[index].y;
+    mesh_vertices[index].pos.z = (*mesh_points)[index].z;
 
-    if(!pointExists(mesh_vertices[index]->m_position) || !normalExists(mesh_vertices[index]->m_normal)){
+
+    if(!pointExists(mesh_vertices[index].pos)){
       std::cout << "invalid point or normal with buffer index: " << index <<  std::endl;
     }
-  }  
-*/
+  }
+
 
   for(size_t i=0; i<hole_triangles.size(); i++){
     if(hole_triangles[i].size() != 3){
@@ -818,23 +802,24 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
     int b = hole_triangles[i][1];
     int c = hole_triangles[i][2];
 
-    if(a < 0 || a >= mesh_vertices->size()){
+    if(a < 0 || a >= mesh_vertices.size()){
       std::cerr << "invalid index:" << a << std::endl;
       continue;
     }
-    if(b < 0 || b >= mesh_vertices->size()){
+    if(b < 0 || b >= mesh_vertices.size()){
       std::cerr << "invalid index:" << b << std::endl;
       continue;
     }
-    if(c < 0 || c >= mesh_vertices->size()){
+    if(c < 0 || c >= mesh_vertices.size()){
       std::cerr << "invalid index:" << c << std::endl;
       continue;
     }
-    lvr2::indexArray triangleInd (new unsigned int[3]);
-    triangleInd[0]=hole_triangles[i][0];
-    triangleInd[1]=hole_triangles[i][1];
-    triangleInd[2]=hole_triangles[i][3];
-
+    lvr2::indexArray triangleInd (new unsigned int[3*(mesh.numVertices()+3)]);
+    triangleInd=mesh.getFaceIndices();
+    triangleInd[mesh.numVertices()+0]=hole_triangles[i][0];
+    triangleInd[mesh.numVertices()+1]=hole_triangles[i][1];
+    triangleInd[mesh.numVertices()+2]=hole_triangles[i][3];
+     mesh.setFaceIndices(triangleInd,mesh.numFaces()+1);
     //Nicht mehr nötig ???
     //mesh->setFaceIndices( triangleInd,3);
 

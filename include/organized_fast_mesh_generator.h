@@ -136,9 +136,11 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
     * \param vertex The vertex to check for existence
     * \return true if all coords are not nan
     */
+    bool pointExists(pcl::PointNormal& point);
+    bool pointExists(lvr2::BaseVector<float>& vertex);
+
     bool pointExists(lvr2::ColorVertex<float,int>& vertex);
 
-    bool pointExists(pcl::PointNormal& point);
 
 
     /**
