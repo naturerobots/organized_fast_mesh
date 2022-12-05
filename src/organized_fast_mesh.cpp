@@ -48,7 +48,6 @@
 #include <lvr2/geometry/HalfEdgeMesh.hpp>
 #include <lvr2/geometry/ColorVertex.hpp>
 
-
 #include <pcl-1.10/pcl/point_types.h>
 #include <pcl-1.10/pcl/point_cloud.h>
 #include <pcl-1.10/pcl/PCLPointCloud2.h>
@@ -76,13 +75,134 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
 
 }
 bool OrganizedFastMesh::generateOrganizedFastMesh(
-  const sensor_msgs::PointCloud2& cloud, mesh_msgs::MeshGeometryStamped& mesh_msg)
+  const sensor_msgs::PointCloud2& cloud, mesh_msgs::MeshGeometryStamped& mesh_msg,std::vector<std_msgs::ColorRGBA> vertex_colors)
 {
+/*
+    sensor_msgs::PointCloud2 cloud;
+    cloud.header = cloudtest.header;
+    // describe the bytes
+    sensor_msgs::PointField field_x;
+    field_x.name = "x";
+    field_x.offset = 0 * sizeof(float);
+    field_x.datatype = sensor_msgs::PointField::FLOAT32;
+    field_x.count = 1;
+    sensor_msgs::PointField field_y;
+    field_y.name = "y";
+    field_y.offset = 1 * sizeof(float);
+    field_y.datatype = sensor_msgs::PointField::FLOAT32;
+    field_y.count = 1;
+    sensor_msgs::PointField field_z;
+    field_z.name = "z";
+    field_z.offset = 2 * sizeof(float);
+    field_z.datatype = sensor_msgs::PointField::FLOAT32;
+    field_z.count = 1;
+    cloud.fields.push_back(field_x);
+    cloud.fields.push_back(field_y);
+    cloud.fields.push_back(field_z);
+    cloud.point_step = 3 * sizeof(float);
+    // insert 5 point in pcl
+    cloud.width =3;
+    cloud.height =7;
+    cloud.row_step = cloud.width * cloud.point_step;
+    cloud.data.resize(cloud.row_step *  cloud.height);
+    // reinterpret byte memory as float memory
+    float* data_raw = reinterpret_cast<float*>(&cloud.data[0]);
+    // data_raw[0] = X0
+    // data_raw[1] = Y0
+    // data_raw[2] = Z0
+    // data_raw[3] = X1
+    // ...
+
+    data_raw[0] = 1.0;
+    data_raw[1] = 1.0;
+    data_raw[2] = 1.0;
+
+    data_raw[3] = 2.0;
+    data_raw[4] = 1.0;
+    data_raw[5] = 2.0;
+
+    data_raw[6] = 3.0;
+    data_raw[7] = 1.0;
+    data_raw[8] = 3.0;
 
 
+    data_raw[9] =  1.0;
+    data_raw[10] = 2.0;
+    data_raw[11] = 4.0;
+
+    data_raw[12] = 2.0;
+    data_raw[13] = 2.0;
+    data_raw[14] = 5.0;
+
+    data_raw[15] = 3.0;
+    data_raw[16] = 2.0;
+    data_raw[17] = 6.0;
 
 
+    data_raw[18] = 1.0;
+    data_raw[19] = 3.0;
+    data_raw[20] = 7.0;
 
+    data_raw[21] = 2.0;
+    data_raw[22] = 3.0;
+    data_raw[23] = 8.0;
+
+    data_raw[24] = 3.0;
+    data_raw[25] = 3.0;
+    data_raw[26] = 9.0;
+
+
+    data_raw[27] = 1.0;
+    data_raw[28] = 4.0;
+    data_raw[29] = 7.0;
+
+    data_raw[30] = 0.0;
+    data_raw[31] = 0.0;
+    data_raw[32] = 0.0;
+
+    data_raw[33] = 3.0;
+    data_raw[34] = 4.0;
+    data_raw[35] = 9.0;
+
+
+    data_raw[27] = 0.0;
+    data_raw[28] = 0.0;
+    data_raw[29] = 0.0;
+
+    data_raw[30] = 0.0;
+    data_raw[31] = 0.0;
+    data_raw[32] = 0.0;
+
+    data_raw[33] = 3.0;
+    data_raw[34] = 4.5;
+    data_raw[35] = 10.0;
+
+    data_raw[27] = 1.5;
+    data_raw[28] = 3.0;
+    data_raw[29] = 7.5;
+
+    data_raw[30] = 3.0;
+    data_raw[31] = 4.5;
+    data_raw[32] = 8.0;
+
+    data_raw[33] = 3.0;
+    data_raw[34] = 4.5;
+    data_raw[35] = 11.0;
+
+    data_raw[27] = 1.0;
+    data_raw[28] = 3.0;
+    data_raw[29] = 12.0;
+
+    data_raw[30] = 2.0;
+    data_raw[31] = 1.0;
+    data_raw[32] = 8.0;
+
+    data_raw[33] = 3.0;
+    data_raw[34] = 4.5;
+    data_raw[35] = 9.0;
+
+
+*/
 
     if(cloud.height < 2){
     ROS_WARN("Received unorganized point cloud!");
@@ -125,16 +245,19 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
   mesh_msg.header.stamp = cloud.header.stamp;
 
 
-  std_msgs::ColorRGBA std_color, con_color;
-  con_color.r = 1;
-  con_color.g = 0.2;
-  con_color.b = 0.2;
-  con_color.a = 1;
-  
-  std_color.r = 0.2;
-  std_color.g = 1;
-  std_color.b = 0.2;
-  con_color.a = 1;
+  for(int i=0;i<mesh_msg.mesh_geometry.vertices.size();i++) {
+
+      std_msgs::ColorRGBA std_color;
+      std_color.r = 1;
+      std_color.g = 5;
+      std_color.b = 4;
+      std_color.a = 1;
+      vertex_colors.push_back(std_color);
+  }
+
+
+
+
 
 
   //mesh_msg.mesh_geometry.vertex_colors.resize(mesh_msg.mesh_geometry.vertices.size());
@@ -173,13 +296,17 @@ bool OrganizedFastMesh::generateOrganizedFastMeshSrv(
   organized_fast_mesh::OrganizedFastMeshSrv::Response& res)
 {
 
-    return generateOrganizedFastMesh(req.organized_scan, res.organized_fast_mesh);
+    return generateOrganizedFastMesh(req.organized_scan, res.organized_fast_mesh, res.vertex_colors);
 }
 
 void OrganizedFastMesh::pointCloud2Callback(const sensor_msgs::PointCloud2::ConstPtr &cloud){
   mesh_msgs::MeshGeometryStamped mesh_msg;
-  if(generateOrganizedFastMesh(*cloud, mesh_msg)){
-    mesh_pub_.publish(mesh_msg);
+  std::vector<std_msgs::ColorRGBA> vertex_colors;
+  if(generateOrganizedFastMesh(*cloud, mesh_msg, vertex_colors)){
+      mesh_pub_.publish(mesh_msg);
+      mesh_pub_.publish(vertex_colors);
+
+
   }
 }
 

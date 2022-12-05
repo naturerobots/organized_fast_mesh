@@ -109,6 +109,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
             if (!pointExists(point) || !normalExists(normal) ||(point.x ==0 && point.z ==0 && point.y==0) ){
                 // index maps to -1
                 index_map[index_map_index] = -1;
+
                 index_map_index++;
             } else { // if the point exists (not nan)
                 // index maps to existing vertex in the mesh
@@ -142,14 +143,13 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
 
 
     // start adding faces to the mesh
-    std::unordered_map<long, int> hashtable;
     std::vector<unsigned int> triangleIndexVec;
-    for (uint32_t x = 0; x < width; x++) {
-        for (uint32_t y = 0; y < height; y++) {
+    for(uint32_t y=0; y<height-1; y++){
+        for(uint32_t x=0; x<width-1; x++){
 
             // get indices around the borders for a 360 degree view
-            uint32_t x_right = (x == width - 1) ? 0 : x + 1;
-            uint32_t y_bottom = (y == height - 1) ? 0 : y + 1;
+            uint32_t x_right = (x == width-1) ? 0 : x+1;
+            uint32_t y_bottom = (y == height-1) ? 0 : y+1;
 
             // get the corresponding indices in the mesh
 
@@ -176,9 +176,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
                 // check if there are longer edges then the threshold
                 if (!hasLongEdge(idx, idx_rb, idx_r, sqr_edge_threshold)) {
 
-                     //   long hash = calculateHash(idx, idx_rb, idx_r, vecPoint.size() / 3);
-                       // bool noPermotation = hashtable.insert({hash, triangleIndexVec.size()}).second;
-                       // if (noPermotation) {
+
                             triangleIndexVec.push_back(idx);
                             triangleIndexVec.push_back(idx_rb);
                             triangleIndexVec.push_back(idx_r);
@@ -192,13 +190,10 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
                     if (!hasLongEdge(idx, idx_b, idx_rb, sqr_edge_threshold)) {
 
 
-                            //long hash =calculateHash(idx,idx_b,idx_rb,vecPoint.size()/3);
-                           // bool noPermotation=hashtable.insert({hash,triangleIndexVec.size()}).second;
-                           // if(noPermotation) {
+
                                 triangleIndexVec.push_back(idx);
                                 triangleIndexVec.push_back(idx_b);
                                 triangleIndexVec.push_back(idx_rb);
-                            //}
 
 
                     }
