@@ -69,7 +69,7 @@ private:
             organized_fast_mesh::OrganizedFastMeshSrv::Response& res);
     bool generateOrganizedFastMesh(
             const sensor_msgs::PointCloud2& cloud,
-            mesh_msgs::MeshGeometryStamped& mesh_msg,std::vector<std_msgs::ColorRGBA> vertex_colors);
+            mesh_msgs::MeshGeometryStamped& mesh_msg);
 
     double edge_threshold;
     bool fillup_base_hole;
