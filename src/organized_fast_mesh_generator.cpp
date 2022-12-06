@@ -74,7 +74,7 @@ void getMesh(lvr2::HalfEdgeMesh<lvr2::ColorVertex<float, int>>& mesh){
 void OrganizedFastMeshGenerator::getMesh(lvr2::BaseMesh<lvr2::ColorVertex<float, int>>& mesh) {
 }
 
-void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
+void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshVertexColorsStamped& color_msg) {
     // clear the vertices vector
     vertices.clear();
     mesh_points = pcl::PointCloud<pcl::PointNormal>::Ptr(new pcl::PointCloud<pcl::PointNormal>);
@@ -82,7 +82,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
 
     uint32_t width = organized_scan.width;
     uint32_t height = organized_scan.height;
-
+    std::vector<char> colors;
     
     index_map_index = 0;
     int index_cnt = 0;
@@ -125,9 +125,47 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
                 mesh_points->push_back(p_pcl);
                 vertices.push_back(point);
 
+               //a r g b
+               if(y%5==0) {
+                   colors.push_back(100);
+                   colors.push_back(0);
+                   colors.push_back(0);
+                   colors.push_back(100);
+               }
+               else if(y%5==1) {
+                   colors.push_back(100);
+                   colors.push_back(100);
+                   colors.push_back(0);
+                   colors.push_back(0);
+               }
+               else if(y%5==2) {
+                           colors.push_back(100);
+                           colors.push_back(0);
+                           colors.push_back(100);
+                           colors.push_back(0);
+               }
+                       else if(y%5==3) {
+                               colors.push_back(100);
+                               colors.push_back(50);
+                               colors.push_back(0);
+                               colors.push_back(50);
+                           }
+                           else if(y%5==4) {
+                                   colors.push_back(100);
+                                   colors.push_back(100);
+                                   colors.push_back(100);
+                                   colors.push_back(0);
+                               }
+
+
+
+
             }
         }
     }
+
+    color_msg.mesh_vertex_colors.vertex_colors.resize(vecPoint.size()/3);
+
 
 
     boost::shared_array<float> arryPoint(new float[vecPoint.size()]);
@@ -135,6 +173,17 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
     for (int i=0;i<vecPoint.size();i++){
         arryPoint[i]=vecPoint[i];
         arryNormal[i]=vecNormal[i];
+
+
+
+
+    }
+
+    for (int i=0;i<vecPoint.size()/3;i++){
+        color_msg.mesh_vertex_colors.vertex_colors[i].a=colors[i*4+0];
+        color_msg.mesh_vertex_colors.vertex_colors[i].r=colors[i*4+1];
+        color_msg.mesh_vertex_colors.vertex_colors[i].g=colors[i*4+2];
+        color_msg.mesh_vertex_colors.vertex_colors[i].b=colors[i*4+3];
     }
 
     mesh.setVertices(arryPoint,vecPoint.size()/3 );
@@ -148,8 +197,8 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh) {
         for(uint32_t x=0; x<width-1; x++){
 
             // get indices around the borders for a 360 degree view
-            uint32_t x_right = (x == width-1) ? 0 : x+1;
-            uint32_t y_bottom = (y == height-1) ? 0 : y+1;
+            uint32_t x_right = (x == width) ? 0 : x+1;
+            uint32_t y_bottom = (y == height) ? 0 : y+1;
 
             // get the corresponding indices in the mesh
 

@@ -50,6 +50,7 @@
 #include "organized_fast_mesh/OrganizedFastMeshSrv.h"
 #include <mesh_msgs/MeshTriangleIndices.h>
 #include <mesh_msgs/MeshGeometryStamped.h>
+#include <mesh_msgs/MeshVertexColorsStamped.h>
 
 #include <std_msgs/ColorRGBA.h>
 
@@ -70,7 +71,7 @@ private:
             organized_fast_mesh::OrganizedFastMeshSrv::Response& res);
     bool generateOrganizedFastMesh(
             const sensor_msgs::PointCloud2& cloud,
-            mesh_msgs::MeshGeometryStamped& mesh_msg);
+            mesh_msgs::MeshGeometryStamped& mesh_msg, mesh_msgs::MeshVertexColorsStamped& color_msg);
 
     double edge_threshold;
     bool fillup_base_hole;

@@ -68,12 +68,12 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
   service_ = nh_.advertiseService("organized_fast_mesh", &OrganizedFastMesh::generateOrganizedFastMeshSrv, this);
 
   ros::NodeHandle p_nh_("~");
-  p_nh_.param("edge_threshold", edge_threshold,0.5);
+  p_nh_.param("edge_threshold", edge_threshold,0.25);
   p_nh_.param("fillup_base_hole", fillup_base_hole, false);
 
 }
 bool OrganizedFastMesh::generateOrganizedFastMesh(
-  const sensor_msgs::PointCloud2& cloud, mesh_msgs::MeshGeometryStamped& mesh_msg)
+  const sensor_msgs::PointCloud2& cloud, mesh_msgs::MeshGeometryStamped& mesh_msg, mesh_msgs::MeshVertexColorsStamped& color_msg)
 {
 /*
     sensor_msgs::PointCloud2 cloud;
@@ -196,7 +196,7 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
   lvr2::MeshBuffer hem;
 
-  ofmg.getMesh(hem);
+  ofmg.getMesh(hem,color_msg);
 
   std::vector<int> contour, fillup_indices;
   if(fillup_base_hole){
@@ -252,34 +252,19 @@ bool OrganizedFastMesh::generateOrganizedFastMeshSrv(
   organized_fast_mesh::OrganizedFastMeshSrv::Request& req,
   organized_fast_mesh::OrganizedFastMeshSrv::Response& res)
 {
+    mesh_msgs::MeshVertexColorsStamped color_msg;
 
-    return generateOrganizedFastMesh(req.organized_scan, res.organized_fast_mesh);
+    return generateOrganizedFastMesh(req.organized_scan, res.organized_fast_mesh,color_msg);
 }
 
 void OrganizedFastMesh::pointCloud2Callback(const sensor_msgs::PointCloud2::ConstPtr &cloud){
   mesh_msgs::MeshGeometryStamped mesh_msg;
   mesh_msgs::MeshVertexColorsStamped color_msg;
-    if(generateOrganizedFastMesh(*cloud, mesh_msg)){
+
+    if(generateOrganizedFastMesh(*cloud, mesh_msg,color_msg)){
       mesh_pub_.publish(mesh_msg);
       color_msg.header=mesh_msg.header;
       color_msg.header.frame_id=mesh_msg.header.frame_id;
-      color_msg.mesh_vertex_colors.vertex_colors.resize(mesh_msg.mesh_geometry.vertices.size());
-      for (int i=0;i<mesh_msg.mesh_geometry.vertices.size();i++){
-          if(i%2==0){
-              color_msg.mesh_vertex_colors.vertex_colors[i].r=i;
-              color_msg.mesh_vertex_colors.vertex_colors[i].g=0;
-              color_msg.mesh_vertex_colors.vertex_colors[i].b=0;
-              color_msg.mesh_vertex_colors.vertex_colors[i].a=0;
-
-
-          }else{
-              color_msg.mesh_vertex_colors.vertex_colors[i].r=0;
-              color_msg.mesh_vertex_colors.vertex_colors[i].g=i;
-              color_msg.mesh_vertex_colors.vertex_colors[i].b=0;
-              color_msg.mesh_vertex_colors.vertex_colors[i].a=0;
-
-          }
-      }
       color_pub_.publish(color_msg);
     }
 }

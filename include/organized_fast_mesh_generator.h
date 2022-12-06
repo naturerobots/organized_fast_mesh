@@ -60,6 +60,7 @@
 #include <lvr2/types/PointBuffer.hpp>
 #include <pcl-1.10/pcl/point_types.h>
 #include <pcl-1.10/pcl/point_cloud.h>
+#include <mesh_msgs/MeshVertexColorsStamped.h>
 
 
 /**
@@ -85,7 +86,7 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
 
     void getMesh(lvr2::HalfEdgeMesh<lvr2::ColorVertex<float, int>>& mesh);
 
-     void getMesh(lvr2::MeshBuffer& mesh);
+     void getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshVertexColorsStamped& color_msg);
     /**
      * \brief sets the maximum edge length to filter big leaps in the 3D depth data
      */
