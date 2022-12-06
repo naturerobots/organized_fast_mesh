@@ -54,7 +54,6 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 
-
 typedef lvr2::ColorVertex<float, int> VertexType;
 typedef lvr2::Normal<float> NormalType;
 
@@ -64,13 +63,12 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
 {
 
     cloud_sub_ = nh_.subscribe("/os_cloud_node/points", 20, &OrganizedFastMesh::pointCloud2Callback, this);
-
-
-  mesh_pub_ = nh_.advertise<mesh_msgs::MeshGeometryStamped>("organized_mesh", 1);
+    color_pub_ = nh_.advertise<mesh_msgs::MeshVertexColorsStamped>("color", 1);
+    mesh_pub_ = nh_.advertise<mesh_msgs::MeshGeometryStamped>("organized_mesh", 1);
   service_ = nh_.advertiseService("organized_fast_mesh", &OrganizedFastMesh::generateOrganizedFastMeshSrv, this);
 
   ros::NodeHandle p_nh_("~");
-  p_nh_.param("edge_threshold", edge_threshold,10.0);
+  p_nh_.param("edge_threshold", edge_threshold,0.5);
   p_nh_.param("fillup_base_hole", fillup_base_hole, false);
 
 }
@@ -127,7 +125,7 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
                 data_raw[(i * 30 + j) * 3 + 1] = j;
                 data_raw[(i * 30 + j) * 3 + 2] = i;
             }
-
++
         }
     }
 
@@ -190,7 +188,7 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
   OrganizedFastMeshGenerator ofmg(cloud_organized);
   ROS_INFO("size of cloud_organized: %d", cloud_organized.size());
-  ROS_INFO("size of pcloud: %d",cloud.height*cloud.width );
+  ROS_INFO("size of pcloud: %d",cloud.width );
 
   ofmg.setEdgeThreshold(edge_threshold);
   //old version
@@ -260,11 +258,30 @@ bool OrganizedFastMesh::generateOrganizedFastMeshSrv(
 
 void OrganizedFastMesh::pointCloud2Callback(const sensor_msgs::PointCloud2::ConstPtr &cloud){
   mesh_msgs::MeshGeometryStamped mesh_msg;
-  if(generateOrganizedFastMesh(*cloud, mesh_msg)){
+  mesh_msgs::MeshVertexColorsStamped color_msg;
+    if(generateOrganizedFastMesh(*cloud, mesh_msg)){
       mesh_pub_.publish(mesh_msg);
+      color_msg.header=mesh_msg.header;
+      color_msg.header.frame_id=mesh_msg.header.frame_id;
+      color_msg.mesh_vertex_colors.vertex_colors.resize(mesh_msg.mesh_geometry.vertices.size());
+      for (int i=0;i<mesh_msg.mesh_geometry.vertices.size();i++){
+          if(i%2==0){
+              color_msg.mesh_vertex_colors.vertex_colors[i].r=i;
+              color_msg.mesh_vertex_colors.vertex_colors[i].g=0;
+              color_msg.mesh_vertex_colors.vertex_colors[i].b=0;
+              color_msg.mesh_vertex_colors.vertex_colors[i].a=0;
 
 
-  }
+          }else{
+              color_msg.mesh_vertex_colors.vertex_colors[i].r=0;
+              color_msg.mesh_vertex_colors.vertex_colors[i].g=i;
+              color_msg.mesh_vertex_colors.vertex_colors[i].b=0;
+              color_msg.mesh_vertex_colors.vertex_colors[i].a=0;
+
+          }
+      }
+      color_pub_.publish(color_msg);
+    }
 }
 
 void print (const mesh_msgs::MeshGeometryStamped msg){

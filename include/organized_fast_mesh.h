@@ -61,6 +61,7 @@ private:
     ros::NodeHandle nh_;
     ros::Subscriber cloud_sub_;
     ros::Publisher mesh_pub_;
+    ros::Publisher color_pub_;
     ros::ServiceServer service_;
 
     void pointCloud2Callback(const sensor_msgs::PointCloud2::ConstPtr &cloud);
