@@ -43,7 +43,7 @@
  */
 #include "organized_fast_mesh.h"
 #include "organized_fast_mesh_generator.h"
-#include <lvr_ros/conversions.h>
+#include <mesh_msgs_conversions/conversions.h>
 #include <lvr2/geometry/BaseVector.hpp>
 #include <lvr2/geometry/HalfEdgeMesh.hpp>
 #include <lvr2/geometry/ColorVertex.hpp>
@@ -194,18 +194,18 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
   //old version
   //lvr2::HalfEdgeMesh<VertexType, NormalType> hem;
 
-  lvr2::MeshBuffer hem;
+  lvr2::MeshBufferPtr mesh_buffer_ptr(new lvr2::MeshBuffer);
 
-  ofmg.getMesh(hem,color_msg);
+  ofmg.getMesh(*mesh_buffer_ptr,color_msg);
 
   std::vector<int> contour, fillup_indices;
   if(fillup_base_hole){
     ofmg.getContour(contour);
     ROS_INFO("base hole contour Size: %d", contour.size());
-    ofmg.fillContour(contour, hem, fillup_indices);
+    ofmg.fillContour(contour, *mesh_buffer_ptr, fillup_indices);
   }
 
- bool success = lvr_ros::fromMeshBufferToTriangleMesh(hem, mesh_msg.mesh_geometry);
+ bool success = mesh_msgs_conversions::fromMeshBufferToMeshGeometryMessage(mesh_buffer_ptr, mesh_msg.mesh_geometry);
 
   mesh_msg.header.frame_id = cloud.header.frame_id;
   mesh_msg.header.stamp = cloud.header.stamp;

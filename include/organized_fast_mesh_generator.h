@@ -57,7 +57,6 @@
 //TODO Thomas fragen was das gemacht hat
 //#include <lvr/geometry/Tesselator.hpp>
 #include <lvr2/geometry/BaseMesh.hpp>
-#include <lvr2/types/PointBuffer.hpp>
 #include <pcl-1.10/pcl/point_types.h>
 #include <pcl-1.10/pcl/point_cloud.h>
 #include <mesh_msgs/MeshVertexColorsStamped.h>

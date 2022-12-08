@@ -3,15 +3,14 @@ cmake_minimum_required(VERSION 2.4.6)
 project(organized_fast_mesh)
 
 find_package(catkin REQUIRED COMPONENTS
-        mesh_msgs
-        roscpp
+  mesh_msgs
+  mesh_msgs_conversions
+  roscpp
   pcl_ros
   rospy
   std_msgs
   sensor_msgs
-        message_generation
-  lvr_ros
-
+  message_generation
 )
 
 find_package(PCL 1.2 REQUIRED)
@@ -52,7 +51,7 @@ generate_messages(
 )
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs sensor_msgs pcl_ros lvr_ros message_runtime
+  CATKIN_DEPENDS mesh_msgs mesh_msgs_conversions roscpp std_msgs sensor_msgs pcl_ros message_runtime
   INCLUDE_DIRS include 
   DEPENDS PCL LVR2
 
