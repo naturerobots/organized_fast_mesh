@@ -58,10 +58,13 @@
 #include <math.h>
 
 
-OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(pcl::PointCloud<pcl::PointNormal>& organized_scan)
-: organized_scan(organized_scan)
+
+
+OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(lvr2::PointBuffer& cloudBuffer,  uint32_t heightOfCloud, uint32_t widthOfCloud)
+: cloudBuffer(cloudBuffer), heightOfCloud(heightOfCloud), widthOfCloud(widthOfCloud)
 {
-  setEdgeThreshold(0.5);
+    setEdgeThreshold(0.5);
+
 }
 
 
@@ -77,13 +80,12 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::BaseMesh<lvr2::ColorVertex<float,
 void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshVertexColorsStamped& color_msg) {
     // clear the vertices vector
     vertices.clear();
-    mesh_points = pcl::PointCloud<pcl::PointNormal>::Ptr(new pcl::PointCloud<pcl::PointNormal>);
 
+    //mesh_points = pcl::PointCloud<pcl::PointNormal>::Ptr(new pcl::PointCloud<pcl::PointNormal>);
 
-    uint32_t width = organized_scan.width;
-    uint32_t height = organized_scan.height;
+    mesh_pointsBuffer =lvr2::PointBuffer();
+
     std::vector<char> colors;
-    
     index_map_index = 0;
     int index_cnt = 0;
 
@@ -95,21 +97,38 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
     std::vector<float> vecPoint;
     std::vector<float> vecNormal;
 
+    lvr2::floatArr cloudPoints = cloudBuffer.getPointArray();
+    lvr2::floatArr cloudNormals =cloudBuffer.getNormalArray();
+    bool hasColor=false;
 
-    for (uint32_t x = 0; x < width; x++) {
-        for (uint32_t y = 0; y < height; y++) {
-            lvr2::ColorVertex<float, int> point; // point at (x,y)
-            lvr2::Normal<float> normal; // normal at (x,y);
+
+    /*if(cloudBuffer.hasColors()){
+       lvr2::ucharArr cloudColors= cloudBuffer.getColorArray();
+    }
+    */
+
+    for (uint32_t x = 0; x < widthOfCloud; x++) {
+        for (uint32_t y = 0; y < heightOfCloud; y++) {
+            lvr2::ColorVertex<float, int> point(cloudPoints[(x*widthOfCloud+y)*3+0],cloudPoints[(x*widthOfCloud+y)*3+1],cloudPoints[(x*widthOfCloud+y)*3+2]); // point at (x,y)
+            lvr2::Normal<float> normal;
+            if(cloudBuffer.hasNormals()){
+             normal = lvr2::Normal<float>(cloudNormals[(x*widthOfCloud+y)*3+0],cloudNormals[x*widthOfCloud+y+1],cloudNormals[(x*widthOfCloud+y)*3+2]);
+            }else {
+                //ANSPRECHEN
+                 normal=lvr2::Normal<float> (0, 1, 0); // normal at (x,y);
+            }
             // get the point at (x,y)
-            pcl::PointNormal p_pcl = organized_scan(x, y);
-
-
+            //Delete PCL
+            /*pcl::PointNormal p_pcl = organized_scan(x, y);
             pclToLvrVertex(p_pcl, point);
             pclToLvrNormal(p_pcl, normal);
+            */
+
+
+
             if (!pointExists(point) || !normalExists(normal) ||(point.x ==0 && point.z ==0 && point.y==0) ){
                 // index maps to -1
                 index_map[index_map_index] = -1;
-
                 index_map_index++;
             } else { // if the point exists (not nan)
                 // index maps to existing vertex in the mesh
@@ -122,40 +141,11 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
                 vecNormal.push_back(normal.x);
                 vecNormal.push_back(normal.y);
                 vecNormal.push_back(normal.z);
-                mesh_points->push_back(p_pcl);
+
                 vertices.push_back(point);
 
-               //a r g b
-               if(y%5==0) {
-                   colors.push_back(100);
-                   colors.push_back(0);
-                   colors.push_back(0);
-                   colors.push_back(100);
-               }
-               else if(y%5==1) {
-                   colors.push_back(100);
-                   colors.push_back(100);
-                   colors.push_back(0);
-                   colors.push_back(0);
-               }
-               else if(y%5==2) {
-                           colors.push_back(100);
-                           colors.push_back(0);
-                           colors.push_back(100);
-                           colors.push_back(0);
-               }
-                       else if(y%5==3) {
-                               colors.push_back(100);
-                               colors.push_back(50);
-                               colors.push_back(0);
-                               colors.push_back(50);
-                           }
-                           else if(y%5==4) {
-                                   colors.push_back(100);
-                                   colors.push_back(100);
-                                   colors.push_back(100);
-                                   colors.push_back(0);
-                               }
+
+
 
 
 
@@ -178,27 +168,34 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
 
 
     }
-
+/*
     for (int i=0;i<vecPoint.size()/3;i++){
         color_msg.mesh_vertex_colors.vertex_colors[i].a=colors[i*4+0];
         color_msg.mesh_vertex_colors.vertex_colors[i].r=colors[i*4+1];
         color_msg.mesh_vertex_colors.vertex_colors[i].g=colors[i*4+2];
         color_msg.mesh_vertex_colors.vertex_colors[i].b=colors[i*4+3];
     }
-
+*/
     mesh.setVertices(arryPoint,vecPoint.size()/3 );
     mesh.setVertexNormals(arryNormal);
+    mesh_pointsBuffer. setPointArray(arryPoint,vecPoint.size()/3 );
+    mesh_pointsBuffer.setNormalArray(arryNormal,vecPoint.size()/3 );
+
+    ROS_INFO("meshpoints: %d",vecPoint.size()/3);
+
+
+
 
 
 
     // start adding faces to the mesh
     std::vector<unsigned int> triangleIndexVec;
-    for(uint32_t y=0; y<height-1; y++){
-        for(uint32_t x=0; x<width-1; x++){
+    for(uint32_t y=0; y<heightOfCloud-1; y++){
+        for(uint32_t x=0; x<widthOfCloud-1; x++){
 
             // get indices around the borders for a 360 degree view
-            uint32_t x_right = (x == width) ? 0 : x+1;
-            uint32_t y_bottom = (y == height) ? 0 : y+1;
+            uint32_t x_right = (x == widthOfCloud) ? 0 : x+1;
+            uint32_t y_bottom = (y == heightOfCloud) ? 0 : y+1;
 
             // get the corresponding indices in the mesh
 
@@ -258,7 +255,9 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
     ROS_INFO("size of vec: %d",triangleIndexVec.size()/3);
 
     for(int i =0;i<triangleIndexVec.size();i++){
+
         triangleIndex[i]=triangleIndexVec[i];
+
     }
 
     mesh.setFaceIndices(triangleIndex,triangleIndexVec.size()/3);
@@ -270,8 +269,8 @@ bool OrganizedFastMeshGenerator::getContour(std::vector<int>& contour_indices){
   // fill up robot shadow in the mesh
   bool found_contour = false;
 
-  int height = organized_scan.height;
-  int width = organized_scan.width;
+  int height = heightOfCloud;
+  int width = widthOfCloud;
 
   int start_x, start_y, end_x, end_y;
   for(int x=width-1; x > 0; x--){
@@ -328,8 +327,8 @@ void OrganizedFastMeshGenerator::showField(std::map<int, int>& index_map, int x,
 bool OrganizedFastMeshGenerator::findContour(std::map<int, int>& index_map, std::vector<int>& contour_indices, int start_x, int start_y, int end_x, int end_y){
   contour_indices.clear();
 
-  int height = organized_scan.height;
-  int width = organized_scan.width;
+  int height = heightOfCloud;
+  int width = widthOfCloud;
 
   int x = start_x;
   int y = start_y;
@@ -433,8 +432,8 @@ long OrganizedFastMeshGenerator::calculateHash(int a, int b, int c,int maxsize){
 
 
 inline bool OrganizedFastMeshGenerator::isValid(int x, int y){
-  const int height = organized_scan.height;
-  const int width = organized_scan.width;
+  const int height =heightOfCloud;
+  const int width = widthOfCloud;
 
   bool around_the_corner_x = false;
   bool around_the_corner_y = true;
@@ -457,8 +456,8 @@ inline bool OrganizedFastMeshGenerator::isValid(int x, int y){
 }
 
 inline bool OrganizedFastMeshGenerator::inBounds(int x, int y){
-  const int height = organized_scan.height;
-  const int width = organized_scan.width;
+  const int height = heightOfCloud;
+  const int width = widthOfCloud;;
 
   return
     0 <= x && x < width && 0 <= y && y < height;
@@ -505,8 +504,8 @@ inline void OrganizedFastMeshGenerator::pclToLvrVertex(pcl::PointNormal& in, lvr
 }
 */
 inline uint32_t OrganizedFastMeshGenerator::toIndex(int x, int y){
-  uint32_t height = organized_scan.height;
-  uint32_t width = organized_scan.width;
+  uint32_t height = heightOfCloud;
+  uint32_t width = widthOfCloud;
 
   //normalize(x, y);
   //return x*height+y;
@@ -543,8 +542,8 @@ inline bool OrganizedFastMeshGenerator::pointExists(pcl::PointNormal& point){
 }
 
 inline void OrganizedFastMeshGenerator::normalize(int& x, int& y){
-  uint32_t height = organized_scan.height;
-  uint32_t width = organized_scan.width;
+  uint32_t height = heightOfCloud;
+  uint32_t width = widthOfCloud;
 
   bool around_the_corner_x = false;
   bool around_the_corner_y = true;
@@ -563,7 +562,8 @@ inline void OrganizedFastMeshGenerator::normalize(int& x, int& y){
 
 
 void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, lvr2::MeshBuffer& mesh,std::vector<int>& fillup_indices){
-  std::vector<int>::iterator c_iter;
+    /*
+    std::vector<int>::iterator c_iter;
   std::map<int, int> hole_index_map;
 
   std::cout << "Remove directly duplicate indices in contour..." << std::endl;
@@ -869,5 +869,6 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
 
   }
 
-
+*/
 }
+

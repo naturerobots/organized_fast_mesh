@@ -47,7 +47,7 @@
 #include <lvr2/geometry/BaseVector.hpp>
 #include <lvr2/geometry/HalfEdgeMesh.hpp>
 #include <lvr2/geometry/ColorVertex.hpp>
-
+#include <lvr_ros/conversions.h>
 #include <pcl-1.10/pcl/point_types.h>
 #include <pcl-1.10/pcl/point_cloud.h>
 #include <pcl-1.10/pcl/PCLPointCloud2.h>
@@ -68,14 +68,14 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
   service_ = nh_.advertiseService("organized_fast_mesh", &OrganizedFastMesh::generateOrganizedFastMeshSrv, this);
 
   ros::NodeHandle p_nh_("~");
-  p_nh_.param("edge_threshold", edge_threshold,0.25);
+  p_nh_.param("edge_threshold", edge_threshold,1.0);
   p_nh_.param("fillup_base_hole", fillup_base_hole, false);
 
 }
 bool OrganizedFastMesh::generateOrganizedFastMesh(
-  const sensor_msgs::PointCloud2& cloud, mesh_msgs::MeshGeometryStamped& mesh_msg, mesh_msgs::MeshVertexColorsStamped& color_msg)
+  const sensor_msgs::PointCloud2& cloudtest, mesh_msgs::MeshGeometryStamped& mesh_msg, mesh_msgs::MeshVertexColorsStamped& color_msg)
 {
-/*
+
     sensor_msgs::PointCloud2 cloud;
     cloud.header = cloudtest.header;
     // describe the bytes
@@ -110,63 +110,23 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
     // data_raw[2] = Z0
     // data_raw[3] = X1
     // ...
-    std::srand(std::time(nullptr));
-    for(int i=0;i<10;i++){
+    for(int i=0;i<30;i++){
         for (int j=0;j<30;j++){
-            int x=std::rand()/((RAND_MAX + 1u)/6);
 
-            if(x==0) {
-                data_raw[(i * 30 + j) * 3 + 0] = x;
-                data_raw[(i * 30 + j) * 3 + 1] = x;
-                data_raw[(i * 30 + j) * 3 + 2] = x;
+
+
+                data_raw[(i * 30 + j) * 3 + 0] = 10;
+                data_raw[(i * 30 + j) * 3 + 1] =j;
+                data_raw[(i * 30+ j) * 3 + 2] = i;
+
+
+
+
             }
-            else{
-                data_raw[(i * 30 + j) * 3 + 0] = x;
-                data_raw[(i * 30 + j) * 3 + 1] = j;
-                data_raw[(i * 30 + j) * 3 + 2] = i;
-            }
-+
         }
-    }
-
-    for(int i=10;i<20;i++){
-        for (int j=0;j<30;j++){
-            int x=std::rand()/((RAND_MAX + 1u)/6);
-
-            if(x==0) {
-                data_raw[(i * 30 + j) * 3 + 0] = x;
-                data_raw[(i * 30 + j) * 3 + 1] = x;
-                data_raw[(i * 30 + j) * 3 + 2] = x;
-            }
-            else{
-                data_raw[(i * 30 + j) * 3 + 0] = j;
-                data_raw[(i * 30 + j) * 3 + 1] = x;
-                data_raw[(i * 30 + j) * 3 + 2] = i;
-            }
-
-        }
-    }
 
 
-    for(int i=20;i<30;i++){
-        for (int j=0;j<30;j++){
-            int x=std::rand()/((RAND_MAX + 1u)/6);
 
-            if(x==0) {
-                data_raw[(i * 30 + j) * 3 + 0] = x;
-                data_raw[(i * 30 + j) * 3 + 1] = x;
-                data_raw[(i * 30 + j) * 3 + 2] = x;
-            }
-            else{
-                data_raw[(i * 30 + j) * 3 + 0] = j;
-                data_raw[(i * 30 + j) * 3 + 1] = i;
-                data_raw[(i * 30 + j) * 3 + 2] = x;
-            }
-
-        }
-    }
-
-*/
 
 
 
@@ -175,20 +135,23 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
     return false;
   }
 
-  pcl::PCLPointCloud2 pcl_cloud;
+ /* pcl::PCLPointCloud2 pcl_cloud;
   pcl_conversions::toPCL(cloud, pcl_cloud);
   pcl::PointCloud<pcl::PointNormal> cloud_organized;
   pcl::fromPCLPointCloud2(pcl_cloud, cloud_organized);
-
-/*
-  lvr2::PointCloud lvr2_cloud;
-  lvr2::PointBuffer PointBuffer;
-  lvr_ros::fromPointCloud2ToPointBuffer(cloud )
 */
 
-  OrganizedFastMeshGenerator ofmg(cloud_organized);
-  ROS_INFO("size of cloud_organized: %d", cloud_organized.size());
-  ROS_INFO("size of pcloud: %d",cloud.width );
+
+  lvr2::PointBuffer pointBuffer;
+  lvr_ros::fromPointCloud2ToPointBuffer(cloud,pointBuffer );
+
+
+
+
+
+  OrganizedFastMeshGenerator ofmg(pointBuffer,cloud.height,cloud.width);
+  ROS_INFO("size of cloud_organized: %d", pointBuffer.numPoints());
+  ROS_INFO("size of pcloud: %d",cloud.width * cloud.height );
 
   ofmg.setEdgeThreshold(edge_threshold);
   //old version
@@ -205,7 +168,10 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
     ofmg.fillContour(contour, *mesh_buffer_ptr, fillup_indices);
   }
 
+
+
  bool success = mesh_msgs_conversions::fromMeshBufferToMeshGeometryMessage(mesh_buffer_ptr, mesh_msg.mesh_geometry);
+
 
   mesh_msg.header.frame_id = cloud.header.frame_id;
   mesh_msg.header.stamp = cloud.header.stamp;
@@ -234,7 +200,6 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
     }
   }
 */
-
 
 
 
@@ -269,10 +234,7 @@ void OrganizedFastMesh::pointCloud2Callback(const sensor_msgs::PointCloud2::Cons
     }
 }
 
-void print (const mesh_msgs::MeshGeometryStamped msg){
-    ROS_INFO("I heard: ");
 
-}
 
 int main(int args, char** argv){
     ros::init(args, argv, "organized_fast_mesh");

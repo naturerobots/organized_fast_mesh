@@ -1,7 +1,0 @@
-/usr/lib/x86_64-linux-gnu/cmake/yaml-cpp/yaml-cpp-config.cmake
-set(YAML_CPP_INCLUDE_DIR "${YAML_CPP_CMAKE_DIR}/../../../../../include")
--->
-set(YAML_CPP_INCLUDE_DIR "${YAML_CPP_CMAKE_DIR}/../../../../include")
-
-
-Es wird MeshMsg aus Mesh Tool benötigt

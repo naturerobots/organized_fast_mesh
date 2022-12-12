@@ -74,8 +74,9 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
      * \param organized_scan The organized pcl point cloud
      */
 
-   OrganizedFastMeshGenerator(pcl::PointCloud<pcl::PointNormal>& organized_scan);
-   //OrganizedFastMeshGenerator(lvr2::PointCloud& organized_scan);
+   OrganizedFastMeshGenerator(lvr2::PointBuffer& cloudBuffer,  uint32_t heightOfCloud, uint32_t widthOfCloud);
+
+    //OrganizedFastMeshGenerator(lvr2::PointCloud& organized_scan);
     /**
      * \brief generates the organized fast mesh
      * \param a reference to the mesh to fill with the data
@@ -83,7 +84,6 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
 
     void getMesh(lvr2::BaseMesh<lvr2::ColorVertex<float, int>>& mesh);
 
-    void getMesh(lvr2::HalfEdgeMesh<lvr2::ColorVertex<float, int>>& mesh);
 
      void getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshVertexColorsStamped& color_msg);
     /**
@@ -174,10 +174,16 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
 	bool inBounds(int x, int y);
 
     //! \holds the organized point cloud
-    pcl::PointCloud<pcl::PointNormal> organized_scan;
+    lvr2::PointBuffer cloudBuffer;
+    uint32_t heightOfCloud;
+    uint32_t widthOfCloud;
+
+
+
     //lvr2::PointCloud organized_scan;
-    pcl::PointCloud<pcl::PointNormal>::Ptr mesh_points;
-    //lvr2::PointCloud* mesh_points;
+    //pcl::PointCloud<pcl::PointNormal>::Ptr mesh_points;
+
+    lvr2::PointBuffer mesh_pointsBuffer;
     //! \holds the vertices in the same order as in the mesh
     std::vector<lvr2::ColorVertex<float, int> >vertices;
     //! \threshold value for the longe edge test
