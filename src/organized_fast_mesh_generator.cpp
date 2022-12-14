@@ -45,13 +45,6 @@
 #include "organized_fast_mesh_generator.h"
 #include <boost/math/special_functions/fpclassify.hpp>
 
-#include <pcl-1.10/pcl/sample_consensus/method_types.h>
-#include <pcl-1.10/pcl/sample_consensus/model_types.h>
-#include <pcl-1.10/pcl/segmentation/sac_segmentation.h>
-
-#include <pcl-1.10/pcl/filters/project_inliers.h>
-
-#include <pcl-1.10/pcl/surface/marching_cubes_rbf.h>
 #include <lvr2/io/DataStruct.hpp>
 #include <ros/ros.h>
 #include <vector>
@@ -80,6 +73,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::BaseMesh<lvr2::ColorVertex<float,
 void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshVertexColorsStamped& color_msg) {
     // clear the vertices vector
     vertices.clear();
+
 
     //mesh_points = pcl::PointCloud<pcl::PointNormal>::Ptr(new pcl::PointCloud<pcl::PointNormal>);
 
@@ -475,34 +469,6 @@ inline bool OrganizedFastMeshGenerator::hasLongEdge(int a, int b, int c, float s
 }
 
 
-
-inline void OrganizedFastMeshGenerator::pclToLvrNormal(pcl::PointNormal& in, lvr2::Normal<float>& out){
-  out.x = in.normal_x;
-  out.y = in.normal_y;
-  out.z = in.normal_z;
-}
-
-inline void OrganizedFastMeshGenerator::lvrToPclVertex(const lvr2::ColorVertex<float,int>& vertex, const lvr2::Normal<float>& normal, pcl::PointNormal& out){
-  out.x = vertex.x;
-  out.y = vertex.y;
-  out.z = vertex.z;
-  out.normal_x = normal.x;
-  out.normal_y = normal.y;
-  out.normal_z = normal.z;
-}
-
-inline void OrganizedFastMeshGenerator::pclToLvrVertex(pcl::PointNormal& in, lvr2::ColorVertex<float,int>& out){
-  out.x = in.x;
-  out.y = in.y;
-  out.z = in.z;
-}
-/*
-inline void OrganizedFastMeshGenerator::pclToLvrVertex(pcl::PointNormal& in, lvr2::Vertex<float>& out){
-  out.x = in.x;
-  out.y = in.y;
-  out.z = in.z;
-}
-*/
 inline uint32_t OrganizedFastMeshGenerator::toIndex(int x, int y){
   uint32_t height = heightOfCloud;
   uint32_t width = widthOfCloud;
@@ -534,12 +500,7 @@ inline bool OrganizedFastMeshGenerator::normalExists(lvr2::Normal<float>& normal
     boost::math::isfinite<float>(normal.z);
 }
 
-inline bool OrganizedFastMeshGenerator::pointExists(pcl::PointNormal& point){
-  return
-    boost::math::isfinite<float>(point.x) &&
-    boost::math::isfinite<float>(point.y) &&
-    boost::math::isfinite<float>(point.z);
-}
+
 
 inline void OrganizedFastMeshGenerator::normalize(int& x, int& y){
   uint32_t height = heightOfCloud;

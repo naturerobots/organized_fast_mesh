@@ -57,8 +57,6 @@
 //TODO Thomas fragen was das gemacht hat
 //#include <lvr/geometry/Tesselator.hpp>
 #include <lvr2/geometry/BaseMesh.hpp>
-#include <pcl-1.10/pcl/point_types.h>
-#include <pcl-1.10/pcl/point_cloud.h>
 #include <mesh_msgs/MeshVertexColorsStamped.h>
 
 
@@ -69,10 +67,7 @@
 
 class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<float, int>>,lvr2::Normal<float>{
     public:
-    /**
-     * \brief Constrcutor
-     * \param organized_scan The organized pcl point cloud
-     */
+
 
    OrganizedFastMeshGenerator(lvr2::PointBuffer& cloudBuffer,  uint32_t heightOfCloud, uint32_t widthOfCloud);
 
@@ -101,26 +96,7 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
 
 	    void normalize(int& x, int& y);
 
-    /**
-     * \brief converts a pcl point into a lvr color vertex
-     * \param in pcl point
-     * \param out lvr point
 
-    **/
-
-    void pclToLvrNormal(pcl::PointNormal& in, lvr2::Normal<float>& out);
-
-    /**
-     * \brief converts a pcl point into a lvr color vertex
-     * \param in pcl point
-     * \param out lvr point
-     **/
-
-    void pclToLvrVertex(pcl::PointNormal& in, lvr2::ColorVertex<float, int>& out);
-
-    //void pclToLvrVertex(pcl::PointNormal& in, lvr2::ColorVertex<>& out);
-
-    void lvrToPclVertex(const lvr2::ColorVertex<float,int>& vertex, const  lvr2::Normal<float>& normal, pcl::PointNormal& out);
 
 
     /**
@@ -136,19 +112,13 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
     * \param vertex The vertex to check for existence
     * \return true if all coords are not nan
     */
-    bool pointExists(pcl::PointNormal& point);
     bool pointExists(lvr2::BaseVector<float>& vertex);
 
     bool pointExists(lvr2::ColorVertex<float,int>& vertex);
 
 
 
-    /**
-     * \brief checks if the given vertex exists
-     * \param vertex The vertex to check for existence
-     * \return true if all coords are not nan
-     */
-   // bool pointExists(lvr2::ColorVertex<float, int>& vertex);
+
 
     /**
      * \brief checks if the given normal exists
@@ -179,9 +149,6 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
     uint32_t widthOfCloud;
 
 
-
-    //lvr2::PointCloud organized_scan;
-    //pcl::PointCloud<pcl::PointNormal>::Ptr mesh_points;
 
     lvr2::PointBuffer mesh_pointsBuffer;
     //! \holds the vertices in the same order as in the mesh

@@ -48,10 +48,7 @@
 #include <lvr2/geometry/HalfEdgeMesh.hpp>
 #include <lvr2/geometry/ColorVertex.hpp>
 #include <lvr_ros/conversions.h>
-#include <pcl-1.10/pcl/point_types.h>
-#include <pcl-1.10/pcl/point_cloud.h>
-#include <pcl-1.10/pcl/PCLPointCloud2.h>
-#include <pcl_conversions/pcl_conversions.h>
+
 
 
 typedef lvr2::ColorVertex<float, int> VertexType;
@@ -68,14 +65,14 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
   service_ = nh_.advertiseService("organized_fast_mesh", &OrganizedFastMesh::generateOrganizedFastMeshSrv, this);
 
   ros::NodeHandle p_nh_("~");
-  p_nh_.param("edge_threshold", edge_threshold,1.0);
+  p_nh_.param("edge_threshold", edge_threshold,10.0);
   p_nh_.param("fillup_base_hole", fillup_base_hole, false);
 
 }
 bool OrganizedFastMesh::generateOrganizedFastMesh(
-  const sensor_msgs::PointCloud2& cloudtest, mesh_msgs::MeshGeometryStamped& mesh_msg, mesh_msgs::MeshVertexColorsStamped& color_msg)
+  const sensor_msgs::PointCloud2& cloud, mesh_msgs::MeshGeometryStamped& mesh_msg, mesh_msgs::MeshVertexColorsStamped& color_msg)
 {
-
+/*
     sensor_msgs::PointCloud2 cloud;
     cloud.header = cloudtest.header;
     // describe the bytes
@@ -115,15 +112,16 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
 
 
-                data_raw[(i * 30 + j) * 3 + 0] = 10;
+                data_raw[(i * 30 + j) * 3 + 0] = j*i;
                 data_raw[(i * 30 + j) * 3 + 1] =j;
-                data_raw[(i * 30+ j) * 3 + 2] = i;
+                data_raw[(i * 30+ j) * 3 + 2] = 0;
 
 
 
 
             }
         }
+*/
 
 
 
@@ -135,11 +133,7 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
     return false;
   }
 
- /* pcl::PCLPointCloud2 pcl_cloud;
-  pcl_conversions::toPCL(cloud, pcl_cloud);
-  pcl::PointCloud<pcl::PointNormal> cloud_organized;
-  pcl::fromPCLPointCloud2(pcl_cloud, cloud_organized);
-*/
+
 
 
   lvr2::PointBuffer pointBuffer;
@@ -172,37 +166,37 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
  bool success = mesh_msgs_conversions::fromMeshBufferToMeshGeometryMessage(mesh_buffer_ptr, mesh_msg.mesh_geometry);
 
-
   mesh_msg.header.frame_id = cloud.header.frame_id;
   mesh_msg.header.stamp = cloud.header.stamp;
 
 
+  std_msgs::ColorRGBA std_color, con_color;
+  con_color.r = 1;
+  con_color.g = 0.2;
+  con_color.b = 0.2;
+  con_color.a = 1;
+
+  std_color.r = 0.2;
+  std_color.g = 1;
+  std_color.b = 0.2;
+  con_color.a = 1;
+
+  color_msg.mesh_vertex_colors.vertex_colors.resize(mesh_msg.mesh_geometry.vertices.size());
 
 
-
-
-
-
-  //mesh_msg.mesh_geometry.vertex_colors.resize(mesh_msg.mesh_geometry.vertices.size());
-  /*
-  std::vector<std_msgs::ColorRGBA> vertex_colors;
-
-  for(int i=0; i<hem.numVertices(); i++){
-	vertex_colors[i] = std_color;
+  for(int i=0; i<  color_msg.mesh_vertex_colors.vertex_colors.size(); i++){
+      color_msg.mesh_vertex_colors.vertex_colors[i] = std_color;
   }
+
 
   if(fillup_base_hole){
     for(int i=0; i<contour.size();i++){
-        vertex_colors[contour[i]] = con_color;
+        color_msg.mesh_vertex_colors.vertex_colors[contour[i]] = con_color;
     }
     for(int i=0; i<fillup_indices.size();i++){
-      vertex_colors[fillup_indices[i]] = con_color;
+        color_msg.mesh_vertex_colors.vertex_colors[fillup_indices[i]] = con_color;
     }
   }
-*/
-
-
-
 
   if(success){
 	ROS_INFO("Publish organized fast mesh in the %s frame with %d triangles, %d vertices and %d vertex normals", mesh_msg.header.frame_id.c_str(), mesh_msg.mesh_geometry.faces.size(), mesh_msg.mesh_geometry.vertices.size(), mesh_msg.mesh_geometry.vertex_normals.size());
