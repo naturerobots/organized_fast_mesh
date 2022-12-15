@@ -59,19 +59,20 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
   : nh_(nh)
 {
 
-    cloud_sub_ = nh_.subscribe("/os_cloud_node/points", 20, &OrganizedFastMesh::pointCloud2Callback, this);
+    cloud_sub_ = nh_.subscribe("/velodyne_points", 20, &OrganizedFastMesh::pointCloud2Callback, this);
     color_pub_ = nh_.advertise<mesh_msgs::MeshVertexColorsStamped>("color", 1);
     mesh_pub_ = nh_.advertise<mesh_msgs::MeshGeometryStamped>("organized_mesh", 1);
   service_ = nh_.advertiseService("organized_fast_mesh", &OrganizedFastMesh::generateOrganizedFastMeshSrv, this);
 
   ros::NodeHandle p_nh_("~");
-  p_nh_.param("edge_threshold", edge_threshold,10.0);
+  p_nh_.param("edge_threshold", edge_threshold,0.5);
   p_nh_.param("fillup_base_hole", fillup_base_hole, false);
 
 }
 bool OrganizedFastMesh::generateOrganizedFastMesh(
   const sensor_msgs::PointCloud2& cloud, mesh_msgs::MeshGeometryStamped& mesh_msg, mesh_msgs::MeshVertexColorsStamped& color_msg)
 {
+
 /*
     sensor_msgs::PointCloud2 cloud;
     cloud.header = cloudtest.header;
@@ -107,20 +108,54 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
     // data_raw[2] = Z0
     // data_raw[3] = X1
     // ...
-    for(int i=0;i<30;i++){
+    std::srand(std::time(nullptr));
+    for(int i=0;i<10;i++){
         for (int j=0;j<30;j++){
+            int x=std::rand()/((RAND_MAX + 1u)/6);
+            if(x==0) {
+                data_raw[(i * 30 + j) * 3 + 0] = x;
+                data_raw[(i * 30 + j) * 3 + 1] = x;
+                data_raw[(i * 30 + j) * 3 + 2] = x;
+            }
+            else{
+                data_raw[(i * 30 + j) * 3 + 0] = x;
+                data_raw[(i * 30 + j) * 3 + 1] = j;
+                data_raw[(i * 30 + j) * 3 + 2] = i;
+            }
 
-
-
-                data_raw[(i * 30 + j) * 3 + 0] = j*i;
-                data_raw[(i * 30 + j) * 3 + 1] =j;
-                data_raw[(i * 30+ j) * 3 + 2] = 0;
-
-
-
-
+        }
+    }
+    for(int i=10;i<20;i++){
+        for (int j=0;j<30;j++){
+            int x=std::rand()/((RAND_MAX + 1u)/6);
+            if(x==0) {
+                data_raw[(i * 30 + j) * 3 + 0] = x;
+                data_raw[(i * 30 + j) * 3 + 1] = x;
+                data_raw[(i * 30 + j) * 3 + 2] = x;
+            }
+            else{
+                data_raw[(i * 30 + j) * 3 + 0] = j;
+                data_raw[(i * 30 + j) * 3 + 1] = x;
+                data_raw[(i * 30 + j) * 3 + 2] = i;
             }
         }
+    }
+    for(int i=20;i<30;i++){
+        for (int j=0;j<30;j++){
+            int x=std::rand()/((RAND_MAX + 1u)/6);
+            if(x==0) {
+                data_raw[(i * 30 + j) * 3 + 0] = x;
+                data_raw[(i * 30 + j) * 3 + 1] = x;
+                data_raw[(i * 30 + j) * 3 + 2] = x;
+            }
+            else{
+                data_raw[(i * 30 + j) * 3 + 0] = j;
+                data_raw[(i * 30 + j) * 3 + 1] = i;
+                data_raw[(i * 30 + j) * 3 + 2] = x;
+            }
+        }
+    }
+
 */
 
 

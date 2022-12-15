@@ -143,6 +143,11 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
 
 	bool inBounds(int x, int y);
 
+    void lvr2MeshtoStdVector(lvr2::MeshBuffer& mes, std::vector<float>& pointVec,std::vector<float>& normalVec);
+    void putStdVectorInMesh(lvr2::MeshBuffer& mes, std::vector<float>& pointVec,std::vector<float>& normalVec);
+
+
+
     //! \holds the organized point cloud
     lvr2::PointBuffer cloudBuffer;
     uint32_t heightOfCloud;

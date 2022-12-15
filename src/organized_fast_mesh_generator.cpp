@@ -49,9 +49,19 @@
 #include <ros/ros.h>
 #include <vector>
 #include <math.h>
-
-
-
+#include <pcl-1.10/pcl/sample_consensus/method_types.h>
+#include <pcl-1.10/pcl/sample_consensus/model_types.h>
+#include <pcl-1.10/pcl/segmentation/sac_segmentation.h>
+#include <pcl-1.10/pcl/search/search.h>
+#include <pcl-1.10/pcl/filters/project_inliers.h>
+#include <pcl-1.10/pcl/point_cloud.h>
+#include <pcl-1.10/pcl/point_types.h>
+#include <pcl-1.10/pcl/search/kdtree.h>
+#include <lvr2/registration/KDTree.hpp>
+#include <pcl-1.10/pcl/segmentation/sac_segmentation.h>
+#include <pcl-1.10/pcl/surface/marching_cubes_rbf.h>
+#include <pcl-1.10/pcl/ModelCoefficients.h>
+#include <pcl-1.10/pcl/PointIndices.h>
 
 OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(lvr2::PointBuffer& cloudBuffer,  uint32_t heightOfCloud, uint32_t widthOfCloud)
 : cloudBuffer(cloudBuffer), heightOfCloud(heightOfCloud), widthOfCloud(widthOfCloud)
@@ -519,67 +529,123 @@ inline void OrganizedFastMeshGenerator::normalize(int& x, int& y){
     while(y < 0) y += height;
   }
 }
+inline void OrganizedFastMeshGenerator::lvr2MeshtoStdVector(lvr2::MeshBuffer& mesh, std::vector<float>& pointVec,std::vector<float>& normalVec) {
+    lvr2::floatArr pointArr = mesh.getVertices();
+    lvr2::floatArr normalArr = mesh.getVertexNormals();
 
+    for (int i = 0; i < mesh.numVertices() * 3; i++) {
+        pointVec[i] = pointArr[i];
+        normalVec[i] = normalArr[i];
+
+    }
+}
+
+inline void OrganizedFastMeshGenerator::putStdVectorInMesh(lvr2::MeshBuffer& mesh, std::vector<float>& pointVec,std::vector<float>& normalVec) {
+    lvr2::floatArr pointArr(new float(pointVec.size()));
+    lvr2::floatArr normalArr(new float(normalVec.size()));
+    for (int i = 0; i < pointVec.size(); i++) {
+        pointArr[i] = pointVec[i];
+    }
+
+    for (int i = 0; i < normalVec.size(); i++) {
+        normalArr[i] = normalVec[i];
+    }
+
+    mesh.setVertices(pointArr,pointVec.size()/3);
+    mesh.setVertices(normalArr,normalVec.size()/3);
+
+
+}
+/*
+inline void OrganizedFastMeshGenerator::putStdVectorFaceInMesh(lvr2::MeshBuffer& mesh, std::vector<int>& faceVec) {
+    lvr2::indexArray face (new unsigned int(faceVec.size()));
+    for (int i=0;i<faceVec.size();i++){
+        face[i]=faceVec[i];
+    }
+    mesh.setFaceIndices(face,faceVec.size()/3);
+
+}
+inline void OrganizedFastMeshGenerator::getStdVectorFacefromMesh(lvr2::MeshBuffer& mesh, std::vector<int>& faceVec) {
+    lvr2::floatArr pointArr(new float(pointVec.size()));
+    lvr2::floatArr normalArr(new float(normalVec.size()));
+    for (int i = 0; i < pointVec.size(); i++) {
+        pointArr[i] = pointVec[i];
+    }
+
+    for (int i = 0; i < normalVec.size(); i++) {
+        normalArr[i] = normalVec[i];
+    }
+
+    mesh.setVertices(pointArr,pointVec.size()/3);
+    mesh.setVertices(normalArr,normalVec.size()/3);
+
+
+}
+
+
+*/
 
 
 void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, lvr2::MeshBuffer& mesh,std::vector<int>& fillup_indices){
-    /*
     std::vector<int>::iterator c_iter;
-  std::map<int, int> hole_index_map;
+    std::map<int, int> hole_index_map;
+    std::vector<float> pointVec;
+    std::vector<float> normalVec;
+    lvr2MeshtoStdVector(mesh,pointVec,normalVec);
+/*
+    std::cout << "Remove directly duplicate indices in contour..." << std::endl;
+    // remove consecutive duplicates
+    std::vector<int> clean_indices = contour_indices;
+    bool clean;
+    do{
+        clean = true;
+        std::vector<int> tmp_indices;
+        int a, b;
+        for(int i=0; i<clean_indices.size()-2;i++){
 
-  std::cout << "Remove directly duplicate indices in contour..." << std::endl;
-  // remove consecutive duplicates
-  std::vector<int> clean_indices = contour_indices;
-  bool clean;
-  do{
-    clean = true;
-    std::vector<int> tmp_indices;
-    int a, b;
-    for(int i=0; i<clean_indices.size()-2;i++){
 
+            a = clean_indices[i];
+            b = clean_indices[i+2];
+            tmp_indices.push_back(a);
 
-      a = clean_indices[i];
-      b = clean_indices[i+2];
-      tmp_indices.push_back(a);
-
-      if(a == b){
-        i+=2;
-        clean = false;
-      }
+            if(a == b){
+                i+=2;
+                clean = false;
+        }
     }
     if(a != b){
       tmp_indices.push_back(*(clean_indices.end()-2));
       tmp_indices.push_back(*(clean_indices.end()-1));
     }
     clean_indices = tmp_indices;
-  }while(!clean);
-
-  std::cout << "Removed " << contour_indices.size() - clean_indices.size() << " duplicate indices of " << contour_indices.size() << " indices in the contour." << std::endl;
-
-  contour_indices = clean_indices;
-
-  for(int i=0; i<contour_indices.size();i++){
-    if(contour_indices[i] == -1){
-      std::cerr << "Error: Invalid point in contour at index " << i <<"!" << std::endl;
-      return;
     }
-  }
+    while(!clean);
 
-  // calculate the centroid of the contour
-  lvr2::ColorVertex<float,int> centroid;
+    std::cout << "Removed " << contour_indices.size() - clean_indices.size() << " duplicate indices of " << contour_indices.size() << " indices in the contour." << std::endl;
+
+    contour_indices = clean_indices;
+
+    for(int i=0; i<contour_indices.size();i++){
+        if(contour_indices[i] == -1){
+            std::cerr << "Error: Invalid point in contour at index " << i <<"!" << std::endl;
+            return;
+        }
+    }
+
+    // calculate the centroid of the contour
+    lvr2::ColorVertex<float,int> centroid;
 
   for(c_iter = contour_indices.begin(); 
       c_iter != contour_indices.end(); ++ c_iter)
   {
     lvr2::ColorVertex<float,int> current_vertex;
-    pclToLvrVertex((*mesh_points)[*c_iter], current_vertex);
+    //what ??
+    //pclToLvrVertex((*mesh_points)[*c_iter], current_vertex);
     centroid += current_vertex;
   }
   centroid /= contour_indices.size();
 
-  pcl::PointNormal pcl_centroid;
   lvr2::Normal<float>normal(0,0,1);
-  lvrToPclVertex(centroid, normal, pcl_centroid);
 
   int num_sub_contours = (int) floor(log2(contour_indices.size()));
 
@@ -589,8 +655,6 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
   hole_indices.push_back(contour_indices);
   int skip = 1;
 
-  std::vector<float> arrSub_vec;
-  std::vector<float> arrSub_nor;
     for(int i=0; i<num_sub_contours; i++) {
         std::vector<int> inner_contour;
         float scale = 1 - (float) (i + 1) / num_sub_contours;
@@ -599,68 +663,31 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
 
             lvr2::ColorVertex<float, int> con_vertex(vertices[contour_indices[j]]);
 
-            arrSub_vec.push_back(centroid[0] + ((con_vertex[0]) - centroid[0] * scale));
-            arrSub_vec.push_back(centroid[1] + ((con_vertex[1]) - centroid[2] * scale));
-            arrSub_vec.push_back(centroid[2] + ((con_vertex[2]) - centroid[2] * scale));
+            pointVec.push_back(centroid[0] + ((con_vertex[0]) - centroid[0] * scale));
+            pointVec.push_back(centroid[1] + ((con_vertex[1]) - centroid[2] * scale));
+            pointVec.push_back(centroid[2] + ((con_vertex[2]) - centroid[2] * scale));
 
-            arrSub_nor.push_back(0);
-            arrSub_nor.push_back(0);
-            arrSub_nor.push_back(1);
+            normalVec.push_back(0);
+            normalVec.push_back(0);
+            normalVec.push_back(1);
 
-            pcl::PointNormal pcl_sub;
-            lvr2::ColorVertex<float, int> sub_vec(arrSub_vec[i * j + 0], arrSub_vec[i * j + 1], arrSub_vec[i * j + 2]);
-            lvr2::Normal<float> sub_nor(arrSub_nor[i * j + 0], arrSub_nor[i * j + 1], arrSub_nor[i * j + 2]);
 
-            lvrToPclVertex(sub_vec, sub_nor, pcl_sub);
-            mesh_points->push_back(pcl_sub);
-            int new_index = ((int) mesh_points->size()) - 1;
+            int new_index = ((int) mesh_pointsBuffer.numPoints()-1);
             fillup_indices.push_back(new_index);
             inner_contour.push_back(new_index);
         }
         hole_indices.push_back(inner_contour);
     }
-    lvr2::floatArr sub_arr(new float[arrSub_vec.size()]);
-    for(int i=0;i<arrSub_vec.size();i++){
-        sub_arr[i]=arrSub_vec[i];
-    }
-
-    lvr2::floatArr arrSub_nor_arr(new float[arrSub_nor.size()]);
-    for(int i=0;i<arrSub_nor.size();i++){
-        sub_arr[i]=arrSub_vec[i];
-    }
 
 
 
-    mesh.setVertices(sub_arr,arrSub_vec.size());
-    mesh.setVertexNormals(arrSub_nor_arr);
-
-    lvr2::floatArr arrycentroid(new float[3]);
-    arrycentroid[0]=centroid.x;
-    arrycentroid[1]=centroid.y;
-    arrycentroid[2]=centroid.z;
-    mesh.setVertices(arrycentroid,1);
-
-  lvr2::floatArr arrySub_nor(new float[3]);
-  arrySub_nor[0]=0;
-  arrySub_nor[1]=0;
-  arrySub_nor[2]=1;
 
 
-  //NORMALEN WEG !!!!
-  lvr2::Normal<float> sub_nor (0,0,1);
-  //mesh->setVertexNormals(arrySub_nor);
-
-
-
-  pcl::PointNormal pcl_sub;
-  lvrToPclVertex(centroid, sub_nor, pcl_sub);
-  mesh_points->push_back(pcl_sub);
-
-  std::vector<int> inner_contour;
-  int new_index = ((int)mesh_points->size())-1;
-  fillup_indices.push_back(new_index);
-  inner_contour.push_back(new_index);
-  hole_indices.push_back(inner_contour);
+    std::vector<int> inner_contour;
+    int new_index = ((int)pointVec.size()/3)-1;
+    fillup_indices.push_back(new_index);
+    inner_contour.push_back(new_index);
+    hole_indices.push_back(inner_contour);
 
     //dirty
   for(int j=0; j< hole_indices.size()-3; j++){
@@ -696,6 +723,8 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
       }
     }
   }
+
+
   int center_index = hole_indices[hole_indices.size()-1][0];
   int j_sub = hole_indices.size()-2;
   int n_j_sub = hole_indices[j_sub].size();
@@ -712,124 +741,133 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
   }
 
 
-  pcl::PointIndices::Ptr in_radius_indices (new pcl::PointIndices);
-
-  std::vector<float> radius_distances;
-  pcl::search::KdTree<pcl::PointNormal>::Ptr tree (new pcl::search::KdTree<pcl::PointNormal>);
-  tree->setInputCloud(mesh_points);
-  tree->radiusSearch(pcl_centroid, 1.2, in_radius_indices->indices, radius_distances);
-
-  std::cerr << "fitting a plane onto the hole vertices... " << std::endl;
-  std::cout << "number of in-radius indices: " << in_radius_indices->indices.size() << std::endl;
-  std::cout << "size of mesh-points: " << mesh_points->size() << std::endl;
-
-  pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
-  pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-  // Create the segmentation object
-  pcl::SACSegmentation<pcl::PointNormal> seg;
-  // Optional
-  seg.setOptimizeCoefficients (true);
-  // Mandatory
-  seg.setModelType (pcl::SACMODEL_PLANE);
-  seg.setMethodType (pcl::SAC_RANSAC);
-  seg.setDistanceThreshold (0.1);
-
-  seg.setInputCloud (mesh_points);
-  seg.setIndices(in_radius_indices);
-  seg.segment (*inliers, *coefficients);
-
-  if (inliers->indices.size () == 0)
-  {
-    PCL_ERROR ("Could not estimate a planar model for the given hole vertices dataset.");
-  }
-
-  std::cerr << "Model coefficients: " << coefficients->values[0] << " " 
-    << coefficients->values[1] << " "
-    << coefficients->values[2] << " " 
-    << coefficients->values[3] << std::endl;
 
 
-  std::cerr << "Number of Inliers: " << inliers->indices.size () << std::endl;
-  std::cerr << "Size of mesh points: " << mesh_points->size() << std::endl;
+    pcl::PointIndices::Ptr in_radius_indices (new pcl::PointIndices);
 
-  lvr2::Normal<float> hole_normal(
-      coefficients->values[0],
-      coefficients->values[1],
-      coefficients->values[2]);
-
-  pcl::ProjectInliers<pcl::PointNormal> proj;
-  proj.setModelType (pcl::SACMODEL_PLANE);
-  proj.setInputCloud (mesh_points);
-  proj.setIndices(inliers);
-  proj.setCopyAllData(true);
-  proj.setModelCoefficients (coefficients);
-  proj.filter (*mesh_points);
+    std::vector<float> radius_distances;
 
 
 
-  std::vector<lvr2::HalfEdgeVertex<lvr2::BaseVector<float>>> mesh_vertices;
-  size_t numVertieces = mesh.numVertices();
-  lvr2::floatArr floatArr = mesh.getVertices();
 
-    //mesh_vertieces=mesh.getVertices
-    for (int i = 0; i <numVertieces;i++){
-      lvr2::HalfEdgeVertex<lvr2::BaseVector<float>> halfEdge;
+    pcl::search::KdTree<pcl::PointNormal>::Ptr tree (new pcl::search::KdTree<pcl::PointNormal>);
+    tree->setInputCloud(mesh_points);
+    tree->radiusSearch(pcl_centroid, 1.2, in_radius_indices->indices, radius_distances);
 
-      lvr2::BaseVector<float> vertex;
-      vertex.x=floatArr[i+0];
-      vertex.y=floatArr[i+1];
-      vertex.z=floatArr[i+2];
+    std::cerr << "fitting a plane onto the hole vertices... " << std::endl;
+    std::cout << "number of in-radius indices: " << in_radius_indices->indices.size() << std::endl;
+    std::cout << "size of mesh-points: " << mesh_points->size() << std::endl;
 
-      halfEdge.pos = vertex;
-      mesh_vertices.push_back(halfEdge);
-  }
+    pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+    pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+    // Create the segmentation object
+    pcl::SACSegmentation<pcl::PointNormal> seg;
+    // Optional
+    seg.setOptimizeCoefficients (true);
+    // Mandatory
+    seg.setModelType (pcl::SACMODEL_PLANE);
+    seg.setMethodType (pcl::SAC_RANSAC);
+    seg.setDistanceThreshold (0.1);
 
-  // OLD VERSEION ALTERNATIVE DAFÜR MIT Normalen möglich ???
-  for(int i=0; i< inliers->indices.size(); i++){
-    int index = inliers->indices[i];
-    mesh_vertices[index].pos.x = (*mesh_points)[index].x;
-    mesh_vertices[index].pos.y = (*mesh_points)[index].y;
-    mesh_vertices[index].pos.z = (*mesh_points)[index].z;
+    seg.setInputCloud (mesh_points);
+    seg.setIndices(in_radius_indices);
+    seg.segment (*inliers, *coefficients);
 
-
-    if(!pointExists(mesh_vertices[index].pos)){
-      std::cout << "invalid point or normal with buffer index: " << index <<  std::endl;
+    if (inliers->indices.size () == 0)
+    {
+        PCL_ERROR ("Could not estimate a planar model for the given hole vertices dataset.");
     }
-  }
+
+    std::cerr << "Model coefficients: " << coefficients->values[0] << " "
+              << coefficients->values[1] << " "
+              << coefficients->values[2] << " "
+              << coefficients->values[3] << std::endl;
 
 
-  for(size_t i=0; i<hole_triangles.size(); i++){
-    if(hole_triangles[i].size() != 3){
-      std::cerr << "wrong number of triangle indices, should be three! -- triangle index: " << i << std::endl;
-      continue;
-    }
-    int a = hole_triangles[i][0];
-    int b = hole_triangles[i][1];
-    int c = hole_triangles[i][2];
+    std::cerr << "Number of Inliers: " << inliers->indices.size () << std::endl;
+    std::cerr << "Size of mesh points: " << mesh_points->size() << std::endl;
 
-    if(a < 0 || a >= mesh_vertices.size()){
-      std::cerr << "invalid index:" << a << std::endl;
-      continue;
-    }
-    if(b < 0 || b >= mesh_vertices.size()){
-      std::cerr << "invalid index:" << b << std::endl;
-      continue;
-    }
-    if(c < 0 || c >= mesh_vertices.size()){
-      std::cerr << "invalid index:" << c << std::endl;
-      continue;
-    }
-    lvr2::indexArray triangleInd (new unsigned int[3*(mesh.numVertices()+3)]);
-    triangleInd=mesh.getFaceIndices();
-    triangleInd[mesh.numVertices()+0]=hole_triangles[i][0];
-    triangleInd[mesh.numVertices()+1]=hole_triangles[i][1];
-    triangleInd[mesh.numVertices()+2]=hole_triangles[i][3];
-     mesh.setFaceIndices(triangleInd,mesh.numFaces()+1);
-    //Nicht mehr nötig ???
-    //mesh->setFaceIndices( triangleInd,3);
+    lvr2::Normal<float> hole_normal(
+            coefficients->values[0],
+            coefficients->values[1],
+            coefficients->values[2]);
 
-  }
+    pcl::ProjectInliers<pcl::PointNormal> proj;
+    proj.setModelType (pcl::SACMODEL_PLANE);
+    proj.setInputCloud (mesh_points);
+    proj.setIndices(inliers);
+    proj.setCopyAllData(true);
+    proj.setModelCoefficients (coefficients);
+    proj.filter (*mesh_points);
+
+    /*
+       pcl::MovingLeastSquares<pcl::PointNormal, pcl::PointNormal> mls;
+       mls.setComputeNormals (false);
+       mls.setInputCloud (pcl_cloud);
+       mls.setIndices(radius_indices);
+       mls.setPolynomialFit (true);
+       mls.setSearchMethod (tree);
+       mls.setSearchRadius (0.3);
+       mls.process(*mls_points);
+     */
+
+/*
+    //TODO Klaren wie WICHTIG BEI PROBLEMEN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    lvr2::HalfEdgeMesh<lvr2::BaseVector<float>>* h_mesh;
+    std::map<int,lvr2::Normal<float>> h_meshMap;
+    h_mesh = static_cast< lvr2::HalfEdgeMesh<lvr2::BaseVector<float>>* > (&mesh);
+
+    h_meshMap=meshMap;
+
+    std::vector<lvr2::HalfEdgeVertex<lvr2::BaseVector<float>>* > mesh_vertices;
+    lvr2::MeshHandleIteratorPtr<lvr2::VertexHandle> meshHandler= mesh.verticesBegin();
+    for (int i=0; i<mesh.numVertices(); i++){
+        lvr2::HalfEdgeVertex<lvr2::BaseVector<float>> temp;
+        temp.pos=mesh.getVertexPosition(meshHandler.operator*());
+        mesh_vertices.push_back(&temp);
+        meshHandler.operator++();
+
+
+    }
+
+    for(int i=0; i< inliers->indices.size(); i++){
+        int index = inliers->indices[i];
+        mesh_vertices[index]->pos.x = (*mesh_points)[index].x;
+        mesh_vertices[index]->pos.y = (*mesh_points)[index].y;
+        mesh_vertices[index]->pos.z = (*mesh_points)[index].z;
+        h_meshMap[index].x = hole_normal.x;
+        h_meshMap[index].y = hole_normal.y;
+        h_meshMap[index].z = hole_normal.z;
+
+        if(!pointExists(mesh_vertices[index]->pos) || !normalExists(h_meshMap[index])){
+            std::cout << "invalid point or normal with buffer index: " << index <<  std::endl;
+        }
+    }
+
+    for(size_t i=0; i<hole_triangles.size(); i++){
+        if(hole_triangles[i].size() != 3){
+            std::cerr << "wrong number of triangle indices, should be three! -- triangle index: " << i << std::endl;
+            continue;
+        }
+        int a = hole_triangles[i][0];
+        int b = hole_triangles[i][1];
+        int c = hole_triangles[i][2];
+
+        if(a < 0 || a >= mesh_vertices.size()){
+            std::cerr << "invalid index:" << a << std::endl;
+            continue;
+        }
+        if(b < 0 || b >= mesh_vertices.size()){
+            std::cerr << "invalid index:" << b << std::endl;
+            continue;
+        }
+        if(c < 0 || c >= mesh_vertices.size()){
+            std::cerr << "invalid index:" << c << std::endl;
+            continue;
+        }
+
 
 */
+
 }
 
