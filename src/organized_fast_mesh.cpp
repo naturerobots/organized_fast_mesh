@@ -173,9 +173,15 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
   lvr2::PointBuffer pointBuffer;
   lvr_ros::fromPointCloud2ToPointBuffer(cloud,pointBuffer );
-
+    typedef sensor_msgs::PointCloud2ConstIterator<float> CloudIterFloat;
+    CloudIterFloat iter_x(cloud, "x");
+    CloudIterFloat iter_y(cloud, "y");
+    CloudIterFloat iter_z(cloud, "z");
+    lvr2::floatArr pointfloat = pointBuffer.getPointArray();
 
     ROS_INFO("size of cloud_buffer: %d", pointBuffer.numPoints());
+    ROS_INFO("size of pcloud: %d",cloud.width * cloud.height );
+
 
 
 

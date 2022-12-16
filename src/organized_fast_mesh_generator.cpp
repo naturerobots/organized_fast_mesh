@@ -102,9 +102,6 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
     std::vector<float> vecNormal;
 
     lvr2::floatArr cloudPoints = cloudBuffer.getPointArray();
-
-
-
     lvr2::floatArr cloudNormals =cloudBuffer.getNormalArray();
     bool hasColor=false;
 
@@ -113,7 +110,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
        lvr2::ucharArr cloudColors= cloudBuffer.getColorArray();
     }
     */
-
+    int zeros=0;
     for (uint32_t x = 0; x < widthOfCloud; x++) {
         for (uint32_t y = 0; y < heightOfCloud; y++) {
 
@@ -131,19 +128,12 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
                 //ANSPRECHEN
                  normal=lvr2::Normal<float> (0, 1, 0); // normal at (x,y);
             }
-            // get the point at (x,y)
-            //Delete PCL
-            /*pcl::PointNormal p_pcl = organized_scan(x, y);
-            pclToLvrVertex(p_pcl, point);
-            pclToLvrNormal(p_pcl, normal);
-            */
 
-
-
-            if (!pointExists(point) || !normalExists(normal) ||(point.x ==0 && point.z ==0 && point.y==0) ){
+            if (std::isnan(point.x) ||std::isnan(point.y)||std::isnan(point.z) ) {
                 // index maps to -1
                 index_map[index_map_index] = -1;
                 index_map_index++;
+                zeros++;
             } else { // if the point exists (not nan)
                 // index maps to existing vertex in the mesh
                 index_map[index_map_index] = index_cnt;
@@ -168,7 +158,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
         }
     }
 
-
+    ROS_INFO("delete zeros %d", zeros);
 
     color_msg.mesh_vertex_colors.vertex_colors.resize(vecPoint.size()/3);
 
