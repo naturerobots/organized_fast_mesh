@@ -102,6 +102,9 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
     std::vector<float> vecNormal;
 
     lvr2::floatArr cloudPoints = cloudBuffer.getPointArray();
+
+
+
     lvr2::floatArr cloudNormals =cloudBuffer.getNormalArray();
     bool hasColor=false;
 
@@ -113,8 +116,15 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
 
     for (uint32_t x = 0; x < widthOfCloud; x++) {
         for (uint32_t y = 0; y < heightOfCloud; y++) {
+
             lvr2::ColorVertex<float, int> point(cloudPoints[(x*widthOfCloud+y)*3+0],cloudPoints[(x*widthOfCloud+y)*3+1],cloudPoints[(x*widthOfCloud+y)*3+2]); // point at (x,y)
             lvr2::Normal<float> normal;
+           /* ROS_INFO("%f",cloudPoints[(x*widthOfCloud+y)*3+0]);
+            ROS_INFO("%f",cloudPoints[(x*widthOfCloud+y)*3+1]);
+            ROS_INFO("%f",cloudPoints[(x*widthOfCloud+y)*3+2]);
+            ROS_INFO("new point");
+*/
+
             if(cloudBuffer.hasNormals()){
              normal = lvr2::Normal<float>(cloudNormals[(x*widthOfCloud+y)*3+0],cloudNormals[x*widthOfCloud+y+1],cloudNormals[(x*widthOfCloud+y)*3+2]);
             }else {
@@ -158,6 +168,8 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
         }
     }
 
+
+
     color_msg.mesh_vertex_colors.vertex_colors.resize(vecPoint.size()/3);
 
 
@@ -194,8 +206,8 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
 
     // start adding faces to the mesh
     std::vector<unsigned int> triangleIndexVec;
-    for(uint32_t y=0; y<heightOfCloud-1; y++){
-        for(uint32_t x=0; x<widthOfCloud-1; x++){
+    for(uint32_t y=0; y<heightOfCloud; y++){
+        for(uint32_t x=0; x<widthOfCloud; x++){
 
             // get indices around the borders for a 360 degree view
             uint32_t x_right = (x == widthOfCloud) ? 0 : x+1;

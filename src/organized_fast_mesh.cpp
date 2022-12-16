@@ -175,11 +175,11 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
   lvr_ros::fromPointCloud2ToPointBuffer(cloud,pointBuffer );
 
 
+    ROS_INFO("size of cloud_buffer: %d", pointBuffer.numPoints());
 
 
 
   OrganizedFastMeshGenerator ofmg(pointBuffer,cloud.height,cloud.width);
-  ROS_INFO("size of cloud_organized: %d", pointBuffer.numPoints());
   ROS_INFO("size of pcloud: %d",cloud.width * cloud.height );
 
   ofmg.setEdgeThreshold(edge_threshold);
