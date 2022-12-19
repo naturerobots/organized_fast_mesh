@@ -146,6 +146,7 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
     void lvr2MeshtoStdVector(lvr2::MeshBuffer& mes, std::vector<float>& pointVec,std::vector<float>& normalVec);
     void putStdVectorInMesh(lvr2::MeshBuffer& mes, std::vector<float>& pointVec,std::vector<float>& normalVec);
 
+    void adFacetoMeshBuffer(lvr2::MeshBuffer& mes, std::vector<int> faceVec );
 
 
     //! \holds the organized point cloud

@@ -62,6 +62,9 @@
 #include <pcl-1.10/pcl/surface/marching_cubes_rbf.h>
 #include <pcl-1.10/pcl/ModelCoefficients.h>
 #include <pcl-1.10/pcl/PointIndices.h>
+#include <lvr2/registration/KDTree.hpp>
+#include <lvr2/reconstruction/SearchTree.hpp>
+
 
 OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(lvr2::PointBuffer& cloudBuffer,  uint32_t heightOfCloud, uint32_t widthOfCloud)
 : cloudBuffer(cloudBuffer), heightOfCloud(heightOfCloud), widthOfCloud(widthOfCloud)
@@ -558,34 +561,30 @@ inline void OrganizedFastMeshGenerator::putStdVectorFaceInMesh(lvr2::MeshBuffer&
     mesh.setFaceIndices(face,faceVec.size()/3);
 
 }
-inline void OrganizedFastMeshGenerator::getStdVectorFacefromMesh(lvr2::MeshBuffer& mesh, std::vector<int>& faceVec) {
-    lvr2::floatArr pointArr(new float(pointVec.size()));
-    lvr2::floatArr normalArr(new float(normalVec.size()));
-    for (int i = 0; i < pointVec.size(); i++) {
-        pointArr[i] = pointVec[i];
+*/
+
+inline void OrganizedFastMeshGenerator::adFacetoMeshBuffer(lvr2::MeshBuffer& mesh, std::vector<int> faceVec) {
+    lvr2::indexArray face(new unsigned int(mesh.numFaces()+faceVec.size()));
+    face=mesh.getFaceIndices();
+    for(int i =mesh.numFaces();i<mesh.numFaces()+faceVec.size(); i++){
+        face[i]=faceVec[i-mesh.numFaces()];
     }
-
-    for (int i = 0; i < normalVec.size(); i++) {
-        normalArr[i] = normalVec[i];
-    }
-
-    mesh.setVertices(pointArr,pointVec.size()/3);
-    mesh.setVertices(normalArr,normalVec.size()/3);
-
+    mesh.setFaceIndices(face,mesh.numFaces()+faceVec.size());
 
 }
 
 
-*/
+
 
 
 void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, lvr2::MeshBuffer& mesh,std::vector<int>& fillup_indices){
+
     std::vector<int>::iterator c_iter;
     std::map<int, int> hole_index_map;
     std::vector<float> pointVec;
     std::vector<float> normalVec;
     lvr2MeshtoStdVector(mesh,pointVec,normalVec);
-/*
+
     std::cout << "Remove directly duplicate indices in contour..." << std::endl;
     // remove consecutive duplicates
     std::vector<int> clean_indices = contour_indices;
@@ -743,13 +742,21 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
 
 
 
+
+
+
+
+
     pcl::search::KdTree<pcl::PointNormal>::Ptr tree (new pcl::search::KdTree<pcl::PointNormal>);
-    tree->setInputCloud(mesh_points);
-    tree->radiusSearch(pcl_centroid, 1.2, in_radius_indices->indices, radius_distances);
+    tree->setInputCloud(mesh_pointsBuffer);
+    tree->radiusSearch(mesh_pointsBuffer, 1.2, in_radius_indices->indices, radius_distances);
+
+
+
 
     std::cerr << "fitting a plane onto the hole vertices... " << std::endl;
     std::cout << "number of in-radius indices: " << in_radius_indices->indices.size() << std::endl;
-    std::cout << "size of mesh-points: " << mesh_points->size() << std::endl;
+    std::cout << "size of mesh-points: " << mesh_pointsBuffer.numPoints() << std::endl;
 
     pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
     pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
@@ -778,7 +785,7 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
 
 
     std::cerr << "Number of Inliers: " << inliers->indices.size () << std::endl;
-    std::cerr << "Size of mesh points: " << mesh_points->size() << std::endl;
+    std::cerr << "Size of mesh points: " << mesh_pointsBuffer.numPoints() << std::endl;
 
     lvr2::Normal<float> hole_normal(
             coefficients->values[0],
@@ -787,11 +794,11 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
 
     pcl::ProjectInliers<pcl::PointNormal> proj;
     proj.setModelType (pcl::SACMODEL_PLANE);
-    proj.setInputCloud (mesh_points);
+    proj.setInputCloud (mesh_pointsBuffer);
     proj.setIndices(inliers);
     proj.setCopyAllData(true);
     proj.setModelCoefficients (coefficients);
-    proj.filter (*mesh_points);
+    proj.filter (*mesh_pointsBuffer);
 
     /*
        pcl::MovingLeastSquares<pcl::PointNormal, pcl::PointNormal> mls;
@@ -804,38 +811,20 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
        mls.process(*mls_points);
      */
 
-/*
+
+
+
+
     //TODO Klaren wie WICHTIG BEI PROBLEMEN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    lvr2::HalfEdgeMesh<lvr2::BaseVector<float>>* h_mesh;
-    std::map<int,lvr2::Normal<float>> h_meshMap;
-    h_mesh = static_cast< lvr2::HalfEdgeMesh<lvr2::BaseVector<float>>* > (&mesh);
-
-    h_meshMap=meshMap;
-
-    std::vector<lvr2::HalfEdgeVertex<lvr2::BaseVector<float>>* > mesh_vertices;
-    lvr2::MeshHandleIteratorPtr<lvr2::VertexHandle> meshHandler= mesh.verticesBegin();
-    for (int i=0; i<mesh.numVertices(); i++){
-        lvr2::HalfEdgeVertex<lvr2::BaseVector<float>> temp;
-        temp.pos=mesh.getVertexPosition(meshHandler.operator*());
-        mesh_vertices.push_back(&temp);
-        meshHandler.operator++();
+    lvr2::MeshBuffer h_mesh;
+    h_mesh=mesh;
+    lvr2::MeshBuffer mesh_vertices;
 
 
-    }
+    mesh_vertices.setVertices(mesh_pointsBuffer.getPointArray(),mesh_pointsBuffer.numPoints());
+    mesh_vertices.setVertexNormals(mesh_pointsBuffer.getNormalArray());
 
-    for(int i=0; i< inliers->indices.size(); i++){
-        int index = inliers->indices[i];
-        mesh_vertices[index]->pos.x = (*mesh_points)[index].x;
-        mesh_vertices[index]->pos.y = (*mesh_points)[index].y;
-        mesh_vertices[index]->pos.z = (*mesh_points)[index].z;
-        h_meshMap[index].x = hole_normal.x;
-        h_meshMap[index].y = hole_normal.y;
-        h_meshMap[index].z = hole_normal.z;
-
-        if(!pointExists(mesh_vertices[index]->pos) || !normalExists(h_meshMap[index])){
-            std::cout << "invalid point or normal with buffer index: " << index <<  std::endl;
-        }
-    }
+    std::vector<int> addFace;
 
     for(size_t i=0; i<hole_triangles.size(); i++){
         if(hole_triangles[i].size() != 3){
@@ -858,9 +847,17 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
             std::cerr << "invalid index:" << c << std::endl;
             continue;
         }
+       addFace.push_back( hole_triangles[i][0]);
+        addFace.push_back( hole_triangles[i][1]);
+        addFace.push_back( hole_triangles[i][2]);
+
+    }
 
 
-*/
+
+    adFacetoMeshBuffer(mesh,addFace);
+
+
 
 }
 
