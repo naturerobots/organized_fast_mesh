@@ -105,7 +105,6 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
     lvr2::floatArr cloudNormals =cloudBuffer.getNormalArray();
     bool hasColor=false;
 
-    int zerosafter=0;
 
 
 
@@ -130,7 +129,6 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
                 // index maps to -1
                 index_map[index_map_index] = -1;
                 index_map_index++;
-                zeros++;
             } else { // if the point exists (not nan)
                 // index maps to existing vertex in the mesh
                 index_map[index_map_index] = index_cnt;
@@ -155,9 +153,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
         }
 
 
-    ROS_INFO("Zeros after %d", zerosafter);
 
-    ROS_INFO("delete zeros %d", zeros);
 
     color_msg.mesh_vertex_colors.vertex_colors.resize(vecPoint.size()/3);
 
@@ -186,7 +182,6 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
     mesh_pointsBuffer. setPointArray(arryPoint,vecPoint.size()/3 );
     mesh_pointsBuffer.setNormalArray(arryNormal,vecPoint.size()/3 );
 
-    ROS_INFO("meshpoints: %d",vecPoint.size()/3);
 
 
 
@@ -255,9 +250,6 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
         }
 
     boost::shared_array<unsigned int> triangleIndex(new unsigned int[triangleIndexVec.size()]);
-
-
-    ROS_INFO("size of vec: %d",triangleIndexVec.size()/3);
 
     for(int i =0;i<triangleIndexVec.size();i++){
 

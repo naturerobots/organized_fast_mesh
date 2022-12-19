@@ -70,124 +70,8 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
 
 }
 bool OrganizedFastMesh::generateOrganizedFastMesh(
-  const sensor_msgs::PointCloud2& cloudtest, mesh_msgs::MeshGeometryStamped& mesh_msg, mesh_msgs::MeshVertexColorsStamped& color_msg)
+  const sensor_msgs::PointCloud2& cloud, mesh_msgs::MeshGeometryStamped& mesh_msg, mesh_msgs::MeshVertexColorsStamped& color_msg)
 {
-
-
-    sensor_msgs::PointCloud2 cloud;
-    cloud.header = cloudtest.header;
-    // describe the bytes
-    sensor_msgs::PointField field_x;
-    field_x.name = "x";
-    field_x.offset = 0 * sizeof(float);
-    field_x.datatype = sensor_msgs::PointField::FLOAT32;
-    field_x.count = 1;
-    sensor_msgs::PointField field_y;
-    field_y.name = "y";
-    field_y.offset = 1 * sizeof(float);
-    field_y.datatype = sensor_msgs::PointField::FLOAT32;
-    field_y.count = 1;
-    sensor_msgs::PointField field_z;
-    field_z.name = "z";
-    field_z.offset = 2 * sizeof(float);
-    field_z.datatype = sensor_msgs::PointField::FLOAT32;
-    field_z.count = 1;
-    cloud.fields.push_back(field_x);
-    cloud.fields.push_back(field_y);
-    cloud.fields.push_back(field_z);
-    cloud.point_step = 3 * sizeof(float);
-    // insert 5 point in pcl
-    cloud.width =cloudtest.width;
-    cloud.height =cloudtest.height;
-    cloud.row_step = cloud.width * cloud.point_step;
-    cloud.data.resize(cloud.row_step *  cloud.height);
-    // reinterpret byte memory as float memory
-    float* data_raw = reinterpret_cast<float*>(&cloud.data[0]);
-    // data_raw[0] = X0
-    // data_raw[1] = Y0
-    // data_raw[2] = Z0
-    // data_raw[3] = X1
-    // ...
-
-    int zeros=0;
-    typedef sensor_msgs::PointCloud2ConstIterator<float> CloudIterFloat;
-    CloudIterFloat iter_x(cloudtest, "x");
-    CloudIterFloat iter_y(cloudtest, "y");
-    CloudIterFloat iter_z(cloudtest, "z");
-    for(int i=0; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z){
-        data_raw[i] = *iter_x;
-        data_raw[i + 1] = *iter_y;
-        data_raw[i + 2] = *iter_z;
-        i+=3;
-        if( std::isnan(*iter_x) &&
-            std::isnan(*iter_y) &&
-            std::isnan(*iter_z))
-
-
-        {
-            zeros++;
-        }
-    }
-    ROS_INFO("Zeros found %d", zeros);
-
-
-
-
-    /*
-    std::srand(std::time(nullptr));
-    for(int i=0;i<10;i++){
-        for (int j=0;j<30;j++){
-            int x=std::rand()/((RAND_MAX + 1u)/6);
-            if(x==0) {
-                data_raw[(i * 30 + j) * 3 + 0] = x;
-                data_raw[(i * 30 + j) * 3 + 1] = 1;
-                data_raw[(i * 30 + j) * 3 + 2] = x;
-            }
-            else{
-                data_raw[(i * 30 + j) * 3 + 0] = x;
-                data_raw[(i * 30 + j) * 3 + 1] = j;
-                data_raw[(i * 30 + j) * 3 + 2] = i;
-            }
-
-        }
-    }
-    for(int i=10;i<20;i++){
-        for (int j=0;j<30;j++){
-            int x=std::rand()/((RAND_MAX + 1u)/6);
-            if(x==0) {
-                data_raw[(i * 30 + j) * 3 + 0] = x;
-                data_raw[(i * 30 + j) * 3 + 1] = 2;
-                data_raw[(i * 30 + j) * 3 + 2] = x;
-            }
-            else{
-                data_raw[(i * 30 + j) * 3 + 0] = j;
-                data_raw[(i * 30 + j) * 3 + 1] = x;
-                data_raw[(i * 30 + j) * 3 + 2] = i;
-            }
-        }
-    }
-    for(int i=20;i<30;i++){
-        for (int j=0;j<30;j++){
-            int x=std::rand()/((RAND_MAX + 1u)/6);
-            if(x==0) {
-                data_raw[(i * 30 + j) * 3 + 0] = std::nan("1");
-                data_raw[(i * 30 + j) * 3 + 1] = std::nan("1");
-                data_raw[(i * 30 + j) * 3 + 2] = std::nan("1");
-            }
-            else{
-                data_raw[(i * 30 + j) * 3 + 0] = std::nan("1");
-                data_raw[(i * 30 + j) * 3 + 1] = std::nan("1");
-                data_raw[(i * 30 + j) * 3 + 2] = std::nan("1");
-            }
-        }
-    }
-
-*/
-
-
-
-
-
 
     if(cloud.height < 2){
     ROS_WARN("Received unorganized point cloud!");
@@ -205,14 +89,11 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
 
 
-    ROS_INFO("size of cloud_buffer: %d", pointBuffer.numPoints());
-    ROS_INFO("size of pcloud: %d",cloud.width * cloud.height );
 
 
 
 
   OrganizedFastMeshGenerator ofmg(pointBuffer,cloud.height,cloud.width);
-  ROS_INFO("size of pcloud: %d",cloud.width * cloud.height );
 
   ofmg.setEdgeThreshold(edge_threshold);
   //old version
