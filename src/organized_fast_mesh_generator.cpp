@@ -105,22 +105,19 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
     lvr2::floatArr cloudNormals =cloudBuffer.getNormalArray();
     bool hasColor=false;
 
+    int zerosafter=0;
 
-    /*if(cloudBuffer.hasColors()){
-       lvr2::ucharArr cloudColors= cloudBuffer.getColorArray();
-    }
-    */
-    int zeros=0;
-    for (uint32_t x = 0; x < widthOfCloud; x++) {
-        for (uint32_t y = 0; y < heightOfCloud; y++) {
 
-            lvr2::ColorVertex<float, int> point(cloudPoints[(x*widthOfCloud+y)*3+0],cloudPoints[(x*widthOfCloud+y)*3+1],cloudPoints[(x*widthOfCloud+y)*3+2]); // point at (x,y)
-            lvr2::Normal<float> normal;
-           /* ROS_INFO("%f",cloudPoints[(x*widthOfCloud+y)*3+0]);
-            ROS_INFO("%f",cloudPoints[(x*widthOfCloud+y)*3+1]);
-            ROS_INFO("%f",cloudPoints[(x*widthOfCloud+y)*3+2]);
-            ROS_INFO("new point");
-*/
+
+
+
+
+        for(int i=0; i<cloudBuffer.numPoints()*3;i+=3){
+
+
+        lvr2::ColorVertex<float, int> point(cloudPoints[i],cloudPoints[i+1],cloudPoints[i+2]); // point at (x,y)
+        lvr2::Normal<float> normal;
+
 
             if(cloudBuffer.hasNormals()){
              normal = lvr2::Normal<float>(cloudNormals[(x*widthOfCloud+y)*3+0],cloudNormals[x*widthOfCloud+y+1],cloudNormals[(x*widthOfCloud+y)*3+2]);
@@ -129,7 +126,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
                  normal=lvr2::Normal<float> (0, 1, 0); // normal at (x,y);
             }
 
-            if (std::isnan(point.x) ||std::isnan(point.y)||std::isnan(point.z) ) {
+            if (std::isnan(point.x) ||std::isnan(point.y)||std::isnan(point.z) || point.z==0 &&  point.y==0 && point.x==0 ) {
                 // index maps to -1
                 index_map[index_map_index] = -1;
                 index_map_index++;
@@ -156,7 +153,9 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
 
             }
         }
-    }
+
+
+    ROS_INFO("Zeros after %d", zerosafter);
 
     ROS_INFO("delete zeros %d", zeros);
 
