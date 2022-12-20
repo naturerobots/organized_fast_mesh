@@ -156,7 +156,7 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<
 
 
 
-    lvr2::PointBuffer mesh_pointsBuffer;
+    lvr2::PointBufferPtr mesh_pointsBuffer;
     //! \holds the vertices in the same order as in the mesh
     std::vector<lvr2::ColorVertex<float, int> >vertices;
     //! \threshold value for the longe edge test

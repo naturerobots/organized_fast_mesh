@@ -49,26 +49,24 @@
 #include <ros/ros.h>
 #include <vector>
 #include <math.h>
-#include <pcl-1.10/pcl/sample_consensus/method_types.h>
-#include <pcl-1.10/pcl/sample_consensus/model_types.h>
-#include <pcl-1.10/pcl/segmentation/sac_segmentation.h>
-#include <pcl-1.10/pcl/search/search.h>
-#include <pcl-1.10/pcl/filters/project_inliers.h>
-#include <pcl-1.10/pcl/point_cloud.h>
-#include <pcl-1.10/pcl/point_types.h>
+
 #include <pcl-1.10/pcl/search/kdtree.h>
 #include <lvr2/registration/KDTree.hpp>
-#include <pcl-1.10/pcl/segmentation/sac_segmentation.h>
 #include <pcl-1.10/pcl/surface/marching_cubes_rbf.h>
-#include <pcl-1.10/pcl/ModelCoefficients.h>
-#include <pcl-1.10/pcl/PointIndices.h>
-#include <lvr2/registration/KDTree.hpp>
-#include <lvr2/reconstruction/SearchTree.hpp>
+
+#include <lvr2/reconstruction/SearchTreeFlann.hpp>
+#include <lvr2/algorithm/ClusterAlgorithms.hpp>
+#include <lvr2/util/ClusterBiMap.hpp>
+#include <lvr2/geometry/HalfEdgeMesh.hpp>
+#include "lvr2/geometry/HalfEdge.hpp"
+#include "lvr2/attrmaps/AttrMaps.hpp"
+#include "lvr2/attrmaps/AttributeMap.hpp"
 
 
 OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(lvr2::PointBuffer& cloudBuffer,  uint32_t heightOfCloud, uint32_t widthOfCloud)
 : cloudBuffer(cloudBuffer), heightOfCloud(heightOfCloud), widthOfCloud(widthOfCloud)
 {
+    mesh_pointsBuffer = std::make_shared<lvr2::PointBuffer>();
     setEdgeThreshold(0.5);
 
 }
@@ -90,7 +88,6 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
 
     //mesh_points = pcl::PointCloud<pcl::PointNormal>::Ptr(new pcl::PointCloud<pcl::PointNormal>);
 
-    mesh_pointsBuffer =lvr2::PointBuffer();
 
     std::vector<char> colors;
     index_map_index = 0;
@@ -182,8 +179,10 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
 */
     mesh.setVertices(arryPoint,vecPoint.size()/3 );
     mesh.setVertexNormals(arryNormal);
-    mesh_pointsBuffer. setPointArray(arryPoint,vecPoint.size()/3 );
-    mesh_pointsBuffer.setNormalArray(arryNormal,vecPoint.size()/3 );
+
+
+    mesh_pointsBuffer-> setPointArray(arryPoint,vecPoint.size()/3 );
+    mesh_pointsBuffer->setNormalArray(arryNormal,vecPoint.size()/3 );
 
 
 
@@ -530,8 +529,9 @@ inline void OrganizedFastMeshGenerator::lvr2MeshtoStdVector(lvr2::MeshBuffer& me
     lvr2::floatArr normalArr = mesh.getVertexNormals();
 
     for (int i = 0; i < mesh.numVertices() * 3; i++) {
-        pointVec[i] = pointArr[i];
-        normalVec[i] = normalArr[i];
+        pointVec.push_back(pointArr[i]);
+        normalVec.push_back(pointArr[i]);
+
 
     }
 }
@@ -664,7 +664,7 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
             normalVec.push_back(1);
 
 
-            int new_index = ((int) mesh_pointsBuffer.numPoints()-1);
+            int new_index = ((int) mesh_pointsBuffer->numPoints()-1);
             fillup_indices.push_back(new_index);
             inner_contour.push_back(new_index);
         }
@@ -733,129 +733,46 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
   }
 
 
-
-
-    pcl::PointIndices::Ptr in_radius_indices (new pcl::PointIndices);
-
+    //radius search
+    std::vector<size_t> indices;
     std::vector<float> radius_distances;
-
-
-
-
-
-
-
-
-
-    pcl::search::KdTree<pcl::PointNormal>::Ptr tree (new pcl::search::KdTree<pcl::PointNormal>);
-    tree->setInputCloud(mesh_pointsBuffer);
-    tree->radiusSearch(mesh_pointsBuffer, 1.2, in_radius_indices->indices, radius_distances);
-
-
-
-
+    float radian = 1.2;
+    lvr2::SearchTreeFlann<lvr2::ColorVertex<float,int>> tree = lvr2::SearchTreeFlann<lvr2::ColorVertex<float,int>> (mesh_pointsBuffer);
+    tree.kSearch(centroid,50,indices,radius_distances);
+    for (int i=0; i<indices.size();i++){
+        if(radius_distances[i]>radian){
+            indices.erase(indices.begin()+i);
+            radius_distances.erase(radius_distances.begin()+i);
+            i--;
+        }
+    }
     std::cerr << "fitting a plane onto the hole vertices... " << std::endl;
-    std::cout << "number of in-radius indices: " << in_radius_indices->indices.size() << std::endl;
-    std::cout << "size of mesh-points: " << mesh_pointsBuffer.numPoints() << std::endl;
-
-    pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
-    pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-    // Create the segmentation object
-    pcl::SACSegmentation<pcl::PointNormal> seg;
-    // Optional
-    seg.setOptimizeCoefficients (true);
-    // Mandatory
-    seg.setModelType (pcl::SACMODEL_PLANE);
-    seg.setMethodType (pcl::SAC_RANSAC);
-    seg.setDistanceThreshold (0.1);
-
-    seg.setInputCloud (mesh_points);
-    seg.setIndices(in_radius_indices);
-    seg.segment (*inliers, *coefficients);
-
-    if (inliers->indices.size () == 0)
-    {
-        PCL_ERROR ("Could not estimate a planar model for the given hole vertices dataset.");
-    }
-
-    std::cerr << "Model coefficients: " << coefficients->values[0] << " "
-              << coefficients->values[1] << " "
-              << coefficients->values[2] << " "
-              << coefficients->values[3] << std::endl;
+    std::cout << "number of in-radius indices: " <<indices.size() << std::endl;
+    std::cout << "size of mesh-points: " << mesh_pointsBuffer->numPoints() << std::endl;
 
 
-    std::cerr << "Number of Inliers: " << inliers->indices.size () << std::endl;
-    std::cerr << "Size of mesh points: " << mesh_pointsBuffer.numPoints() << std::endl;
-
-    lvr2::Normal<float> hole_normal(
-            coefficients->values[0],
-            coefficients->values[1],
-            coefficients->values[2]);
-
-    pcl::ProjectInliers<pcl::PointNormal> proj;
-    proj.setModelType (pcl::SACMODEL_PLANE);
-    proj.setInputCloud (mesh_pointsBuffer);
-    proj.setIndices(inliers);
-    proj.setCopyAllData(true);
-    proj.setModelCoefficients (coefficients);
-    proj.filter (*mesh_pointsBuffer);
-
-    /*
-       pcl::MovingLeastSquares<pcl::PointNormal, pcl::PointNormal> mls;
-       mls.setComputeNormals (false);
-       mls.setInputCloud (pcl_cloud);
-       mls.setIndices(radius_indices);
-       mls.setPolynomialFit (true);
-       mls.setSearchMethod (tree);
-       mls.setSearchRadius (0.3);
-       mls.process(*mls_points);
-     */
+    lvr2::HalfEdgeMesh<lvr2::BaseVector<float>> mesh_pointsHalfEdge;
+    lvr2::TinyFaceMap<lvr2::Normal<float>> normals;
+    lvr2::floatArr vecArr=mesh_pointsBuffer->getPointArray();
+    lvr2::floatArr normalArr=mesh_pointsBuffer->getNormalArray();
 
 
 
 
-
-    //TODO Klaren wie WICHTIG BEI PROBLEMEN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    lvr2::MeshBuffer h_mesh;
-    h_mesh=mesh;
-    lvr2::MeshBuffer mesh_vertices;
-
-
-    mesh_vertices.setVertices(mesh_pointsBuffer.getPointArray(),mesh_pointsBuffer.numPoints());
-    mesh_vertices.setVertexNormals(mesh_pointsBuffer.getNormalArray());
-
-    std::vector<int> addFace;
-
-    for(size_t i=0; i<hole_triangles.size(); i++){
-        if(hole_triangles[i].size() != 3){
-            std::cerr << "wrong number of triangle indices, should be three! -- triangle index: " << i << std::endl;
-            continue;
-        }
-        int a = hole_triangles[i][0];
-        int b = hole_triangles[i][1];
-        int c = hole_triangles[i][2];
-
-        if(a < 0 || a >= mesh_vertices.size()){
-            std::cerr << "invalid index:" << a << std::endl;
-            continue;
-        }
-        if(b < 0 || b >= mesh_vertices.size()){
-            std::cerr << "invalid index:" << b << std::endl;
-            continue;
-        }
-        if(c < 0 || c >= mesh_vertices.size()){
-            std::cerr << "invalid index:" << c << std::endl;
-            continue;
-        }
-       addFace.push_back( hole_triangles[i][0]);
-        addFace.push_back( hole_triangles[i][1]);
-        addFace.push_back( hole_triangles[i][2]);
-
+    for (int i =0; i<mesh_pointsBuffer->numPoints()*3;i=i+3){
+        lvr2::BaseVector<float> p (vecArr[i],vecArr[i+1],vecArr[i+2]);
+        lvr2::Normal<float> n (normalArr[i],normalArr[i+1],normalArr[i+2]);
+        mesh_pointsHalfEdge.addVertex(p);
+        lvr2::FaceHandle handler(i/3);
+        normals.insert(handler,n);
     }
 
 
+    lvr2::ClusterBiMap<lvr2::FaceHandle> clusters =  lvr2::iterativePlanarClusterGrowingRANSAC(mesh_pointsHalfEdge,normals,10,50.0,0.0);
 
-    adFacetoMeshBuffer(mesh,addFace);
+    ROS_INFO("%d", clusters.numCluster());
+
+
 
 
 
