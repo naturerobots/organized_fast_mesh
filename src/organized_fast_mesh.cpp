@@ -72,7 +72,6 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
 bool OrganizedFastMesh::generateOrganizedFastMesh(
   const sensor_msgs::PointCloud2& cloud, mesh_msgs::MeshGeometryStamped& mesh_msg, mesh_msgs::MeshVertexColorsStamped& color_msg)
 {
-
     if(cloud.height < 2){
     ROS_WARN("Received unorganized point cloud!");
     return false;
@@ -86,13 +85,6 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
   lvr2::floatArr pointfloat = pointBuffer.getPointArray();
 
-
-
-
-
-
-
-
   OrganizedFastMeshGenerator ofmg(pointBuffer,cloud.height,cloud.width);
 
   ofmg.setEdgeThreshold(edge_threshold);
@@ -105,8 +97,37 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
   std::vector<int> contour, fillup_indices;
   if(fillup_base_hole){
+      /*Replace with
+      vector<vector<VertexHandle>> findContours(
+              BaseMesh<BaseVecT>& mesh, --> mesh als HalfEdgeMesh
+              const ClusterBiMap<FaceHandle>& clusters, --> a=) aus  iterativePlanarClusterGrowingRANSAC oder aus
+              ClusterHandle clusterH --> handler von clusters
+      );
+*/
     ofmg.getContour(contour);
     ROS_INFO("base hole contour Size: %d", contour.size());
+    /*replace with OODER reicht das alleine  oder vertauschen mit Find aber wiederspricht der Logik ?
+    ClusterBiMap<FaceHandle> iterativePlanarClusterGrowingRANSAC(
+              BaseMesh<BaseVecT>& mesh, --> mesh aber als baseMesh --> HalfEdgeMesh
+              FaceMap<Normal<typename BaseVecT::CoordType>>& normals, --> bauen aus mesh.getVecNormals aber was ist der key
+              float minSinAngle, -> kleiner 1 ?
+              int numIterations, -> starten mit wenig 10
+              int minClusterSize, --> 3
+              int ransacIterations = 100,
+              int ransacSamples = 10
+      );
+      aber welchen Winkel voher war Distance, was ist mit den anderen Parametern ??
+      * aber ich hab keine FaceNormals sondern VecNormals
+      * anschließend über die CLusterBiMap iterieren und Faces dem Mesh hinzufügen
+      * frage der geschwindkeit bei test arschlangsam
+      * wennn iterativePlanarClusterGrowingRANSAC --> find Conntour dann immer zwei aus dem Vec mit dem Center zu einem Face verbinden
+      *
+      * alternativ nachher simplifyContour(const BaseMesh<BaseVecT>& mesh,
+                                     const vector<VertexHandle>& contour,
+                                     float threshold); über die Contour jagen
+
+      *
+      * */
     ofmg.fillContour(contour, *mesh_buffer_ptr, fillup_indices);
   }
 

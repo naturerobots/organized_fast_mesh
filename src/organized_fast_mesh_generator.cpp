@@ -266,27 +266,34 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer& mesh,mesh_msgs::MeshV
 
 bool OrganizedFastMeshGenerator::getContour(std::vector<int>& contour_indices){
   // fill up robot shadow in the mesh
-  bool found_contour = false;
+  bool found_contour = false; //warum ???? wird nie true
 
   int height = heightOfCloud;
   int width = widthOfCloud;
 
   int start_x, start_y, end_x, end_y;
-  for(int x=width-1; x > 0; x--){
-    if(index_map[toIndex(x, 0)] != -1){
-      start_x = x;
-      start_y = 0;
-      break;
-    }
-  }
 
+//warum nicht 0 -> widht
+  for(int x=width-1; x > 0; x--){
+      if(index_map[widthOfCloud*x] != -1){
+          start_x = x;
+          start_y = 0;
+          break;
+      }
+  }
+    start_x = 0;
+    start_y = 0;
+
+  //warum so
   for(int x=width-1; x > 0 && !found_contour; x--){
-    if(index_map[toIndex(x, height-1)] != -1){
+    if(index_map[widthOfCloud*x+height-1] != -1){
       end_x = x;
       end_y = height-1;
       break;
     }
   }
+    end_x = 15;
+    end_y = height-1;
 
   std::cout << "start_x: " << start_x << std::endl;
   std::cout << "start_y: " << start_y << std::endl;
@@ -295,6 +302,9 @@ bool OrganizedFastMeshGenerator::getContour(std::vector<int>& contour_indices){
 
   std::cout << "width: " << width << std::endl;
   std::cout << "height: " << height << std::endl;
+
+
+
 
   return findContour(index_map, contour_indices, start_x, start_y, start_x, start_y);
 
@@ -323,23 +333,30 @@ void OrganizedFastMeshGenerator::showField(std::map<int, int>& index_map, int x,
 
 }
 
+
+//erstzen durch lvr2::findContours(
+//    BaseMesh<BaseVecT>& mesh,
+//    const ClusterBiMap<FaceHandle>& clusters,
+//    ClusterHandle clusterH
+//);
 bool OrganizedFastMeshGenerator::findContour(std::map<int, int>& index_map, std::vector<int>& contour_indices, int start_x, int start_y, int end_x, int end_y){
+
   contour_indices.clear();
 
-  int height = heightOfCloud;
+   int height = heightOfCloud;
   int width = widthOfCloud;
 
   int x = start_x;
   int y = start_y;
 
-  uint32_t index = index_map[toIndex(x, y)];
+  uint32_t index = index_map[x*width+y];
   contour_indices.push_back(index);
 
   if(index == -1){
     std::cerr << "return false: invalid (x,y): (" << x << ", "<< y << ")" << std::endl;
     return false;
   }
-
+//Black magic hopefully still working
   bool ri = isValid(x, y+1);
   bool li = isValid(x, y-1);
   bool bi = isValid(x+1, y);
@@ -356,7 +373,7 @@ bool OrganizedFastMeshGenerator::findContour(std::map<int, int>& index_map, std:
 
   while(x != end_x || y != end_y){
 
-    index = index_map[toIndex(x, y)];
+    index = index_map[x*width+y];
     contour_indices.push_back(index);
 
     int dx = 0;
@@ -386,7 +403,7 @@ bool OrganizedFastMeshGenerator::findContour(std::map<int, int>& index_map, std:
     bool pri = isValid(px+dy, py-dx);
 
     int next_x, next_y;
-
+    //muss das nicht mal auftreten was ist die alternative
     if(std::abs(dx) + std::abs(dy) != 1){
       std::cout << "Error:  dx: " << dx << " dy: " << dy << std::endl;
       return false;
@@ -412,22 +429,12 @@ bool OrganizedFastMeshGenerator::findContour(std::map<int, int>& index_map, std:
     y = next_y;
     normalize(x, y);
   }
-}
-
-
-
-long OrganizedFastMeshGenerator::calculateHash(int a, int b, int c,int maxsize){
-
-    int arr[] ={a,b,c};
-    int n = sizeof(arr) / sizeof(arr[0]);
-    sort(arr,arr+n);
-    int big=arr[2];
-    int middel=arr[1];
-    int small=arr[0];
-
-    return big * pow(maxsize,2) + middel* maxsize+small;
 
 }
+
+
+
+
 
 
 inline bool OrganizedFastMeshGenerator::isValid(int x, int y){
@@ -586,7 +593,7 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
     lvr2MeshtoStdVector(mesh,pointVec,normalVec);
 
     std::cout << "Remove directly duplicate indices in contour..." << std::endl;
-    // remove consecutive duplicates
+    // remove consecutive duplicates // ne nicht mehr wtf
     std::vector<int> clean_indices = contour_indices;
     bool clean;
     do{
@@ -612,11 +619,10 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
     clean_indices = tmp_indices;
     }
     while(!clean);
-
     std::cout << "Removed " << contour_indices.size() - clean_indices.size() << " duplicate indices of " << contour_indices.size() << " indices in the contour." << std::endl;
 
+    //wie kann das passieren
     contour_indices = clean_indices;
-
     for(int i=0; i<contour_indices.size();i++){
         if(contour_indices[i] == -1){
             std::cerr << "Error: Invalid point in contour at index " << i <<"!" << std::endl;
@@ -625,22 +631,20 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
     }
 
     // calculate the centroid of the contour
-    lvr2::ColorVertex<float,int> centroid;
+    lvr2::BaseVector<float> centroid;
 
   for(c_iter = contour_indices.begin(); 
       c_iter != contour_indices.end(); ++ c_iter)
   {
-    lvr2::ColorVertex<float,int> current_vertex;
-    //what ??
-    //pclToLvrVertex((*mesh_points)[*c_iter], current_vertex);
+      lvr2::BaseVector<float> current_vertex (mesh_pointsBuffer->getPointArray()[*c_iter],mesh_pointsBuffer->getPointArray()[*c_iter+1],mesh_pointsBuffer->getPointArray()[*c_iter+2]);
+
     centroid += current_vertex;
   }
   centroid /= contour_indices.size();
 
   lvr2::Normal<float>normal(0,0,1);
-
+  //wtf
   int num_sub_contours = (int) floor(log2(contour_indices.size()));
-
   std::vector<std::vector<int> > hole_triangles;
   std::vector<std::vector<int> > hole_indices;
 
@@ -653,7 +657,7 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
         skip *= 2;
         for (int j = 0; j < contour_indices.size(); j += skip) {
 
-            lvr2::ColorVertex<float, int> con_vertex(vertices[contour_indices[j]]);
+            lvr2::BaseVector<float> con_vertex(vertices[contour_indices[j]]);
 
             pointVec.push_back(centroid[0] + ((con_vertex[0]) - centroid[0] * scale));
             pointVec.push_back(centroid[1] + ((con_vertex[1]) - centroid[2] * scale));
@@ -670,9 +674,6 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
         }
         hole_indices.push_back(inner_contour);
     }
-
-
-
 
 
     std::vector<int> inner_contour;
@@ -733,11 +734,11 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
   }
 
 
-    //radius search
+    //radius search like pcl but with lvr tools
     std::vector<size_t> indices;
     std::vector<float> radius_distances;
     float radian = 1.2;
-    lvr2::SearchTreeFlann<lvr2::ColorVertex<float,int>> tree = lvr2::SearchTreeFlann<lvr2::ColorVertex<float,int>> (mesh_pointsBuffer);
+    lvr2::SearchTreeFlann<lvr2::BaseVector<float>> tree = lvr2::SearchTreeFlann<lvr2::BaseVector<float>> (mesh_pointsBuffer);
     tree.kSearch(centroid,50,indices,radius_distances);
     for (int i=0; i<indices.size();i++){
         if(radius_distances[i]>radian){
@@ -765,14 +766,75 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int>& contour_indices, 
         mesh_pointsHalfEdge.addVertex(p);
         lvr2::FaceHandle handler(i/3);
         normals.insert(handler,n);
+
+    }
+
+    //oder erst hier RANSAC
+    lvr2::ClusterBiMap<lvr2::FaceHandle> clusters =  lvr2::iterativePlanarClusterGrowingRANSAC(mesh_pointsHalfEdge,normals,360,50.0,0.0);
+
+    ROS_INFO("%d", clusters.numCluster());
+    std::vector<lvr2::HalfEdgeVertex<lvr2::BaseVector<float>>> mesh_vertices;
+    size_t numVertieces = mesh.numVertices();
+    lvr2::floatArr floatArr = mesh.getVertices();
+
+    //mesh_vertieces=mesh.getVertices
+    for (int i = 0; i <numVertieces;i++){
+        lvr2::HalfEdgeVertex<lvr2::BaseVector<float>> halfEdge;
+
+        lvr2::BaseVector<float> vertex;
+        vertex.x=floatArr[i+0];
+        vertex.y=floatArr[i+1];
+        vertex.z=floatArr[i+2];
+
+        halfEdge.pos = vertex;
+        mesh_vertices.push_back(halfEdge);
+    }
+
+    // OLD VERSEION ALTERNATIVE DAFÜR MIT Normalen möglich ???
+    for(int i=0; i< inliers->indices.size(); i++){
+        int index = inliers->indices[i];
+        mesh_vertices[index].pos.x = (*mesh_points)[index].x;
+        mesh_vertices[index].pos.y = (*mesh_points)[index].y;
+        mesh_vertices[index].pos.z = (*mesh_points)[index].z;
+
+
+        if(!pointExists(mesh_vertices[index].pos)){
+            std::cout << "invalid point or normal with buffer index: " << index <<  std::endl;
+        }
     }
 
 
-    lvr2::ClusterBiMap<lvr2::FaceHandle> clusters =  lvr2::iterativePlanarClusterGrowingRANSAC(mesh_pointsHalfEdge,normals,10,50.0,0.0);
+    for(size_t i=0; i<hole_triangles.size(); i++){
+        if(hole_triangles[i].size() != 3){
+            std::cerr << "wrong number of triangle indices, should be three! -- triangle index: " << i << std::endl;
+            continue;
+        }
+        int a = hole_triangles[i][0];
+        int b = hole_triangles[i][1];
+        int c = hole_triangles[i][2];
 
-    ROS_INFO("%d", clusters.numCluster());
+        if(a < 0 || a >= mesh_vertices.size()){
+            std::cerr << "invalid index:" << a << std::endl;
+            continue;
+        }
+        if(b < 0 || b >= mesh_vertices.size()){
+            std::cerr << "invalid index:" << b << std::endl;
+            continue;
+        }
+        if(c < 0 || c >= mesh_vertices.size()){
+            std::cerr << "invalid index:" << c << std::endl;
+            continue;
+        }
+        lvr2::indexArray triangleInd (new unsigned int[3*(mesh.numVertices()+3)]);
+        triangleInd=mesh.getFaceIndices();
+        triangleInd[mesh.numVertices()+0]=hole_triangles[i][0];
+        triangleInd[mesh.numVertices()+1]=hole_triangles[i][1];
+        triangleInd[mesh.numVertices()+2]=hole_triangles[i][3];
+        mesh.setFaceIndices(triangleInd,mesh.numFaces()+1);
+        //Nicht mehr nötig ???
+        //mesh->setFaceIndices( triangleInd,3);
 
-
+    }
 
 
 
