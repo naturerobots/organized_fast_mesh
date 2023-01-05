@@ -63,9 +63,7 @@
  * \brief Generates an organized fast mesh out of an organized point cloud
  */
 //#TODO delete MeshGenarator
-class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex < float, int>>
-
-,lvr2::Normal<float>{
+class OrganizedFastMeshGenerator {
     public:
 
     /**
@@ -78,14 +76,9 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex 
     uint32_t heightOfCloud, uint32_t
     widthOfCloud);
 
-    /**
-     * TODO delete ??
-     */
-    void getMesh(lvr2::BaseMesh <lvr2::ColorVertex<float, int>> &mesh);
 
-    /**
-     * TODO delete ??
-     */
+
+
     void getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::MeshVertexColorsStamped &color_msg);
 
     /**

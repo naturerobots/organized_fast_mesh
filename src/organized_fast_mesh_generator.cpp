@@ -71,14 +71,9 @@ OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudB
 
 }
 
-// #TODO deleten??
-void getMesh(lvr2::HalfEdgeMesh<lvr2::ColorVertex<float, int>> &mesh) {
 
-}
 
-//deleten??
-void OrganizedFastMeshGenerator::getMesh(lvr2::BaseMesh<lvr2::ColorVertex<float, int>> &mesh) {
-}
+
 
 void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::MeshVertexColorsStamped &color_msg) {
     // clear thePunkt vertices vector
@@ -108,9 +103,9 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
 
 
         if (cloudBuffer.hasNormals()) {
-            normal = lvr2::Normal<float>(cloudNormals[(x * widthOfCloud + y) * 3 + 0],
-                                         cloudNormals[x * widthOfCloud + y + 1],
-                                         cloudNormals[(x * widthOfCloud + y) * 3 + 2]);
+            normal = lvr2::Normal<float>(cloudNormals[i],
+                                         cloudNormals[i+ 1],
+                                         cloudNormals[i+2]);
         } else {
             normal = lvr2::Normal<float>(0, 1, 0); // normal at (x,y);
         }
