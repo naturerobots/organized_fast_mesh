@@ -168,7 +168,6 @@ class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex 
 
     //! \holds the organized point cloud
     lvr2::PointBuffer cloudBuffer;
-    lvr2::PointBufferPtr mesh_pointsBuffer;
     //! \holds the height and width to reorganized the cloudBuffer
     uint32_t heightOfCloud;
     uint32_t widthOfCloud;
