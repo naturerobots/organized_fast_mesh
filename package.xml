@@ -13,7 +13,7 @@
   <build_depend>roscpp</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>pcl_ros</build_depend>
-  <build_depend>std_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>#
   <build_depend>lvr_ros</build_depend>
   <build_depend>pcl_ros</build_depend>
   <build_depend>mesh_msgs_conversions</build_depend>
