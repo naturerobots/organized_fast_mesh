@@ -52,27 +52,30 @@ generate_messages(
 catkin_package(
         CATKIN_DEPENDS mesh_msgs mesh_msgs_conversions roscpp std_msgs sensor_msgs pcl_ros message_runtime lvr_ros
         INCLUDE_DIRS include
-        LIBRARIES ${PROJECT_NAME}
+        LIBRARIES organized_fast_mesh
         DEPENDS LVR2 PCL
 )
 add_library(organized_fast_mesh src/organized_fast_mesh.cpp src/organized_fast_mesh_generator.cpp)
-#add_executable(organized_fast_mesh src/organized_fast_mesh.cpp src/organized_fast_mesh_generator.cpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+add_executable(organized_fast_mesh_node src/organized_fast_mesh.cpp src/organized_fast_mesh_generator.cpp)
 
-target_link_libraries(organized_fast_mesh
+target_link_libraries(organized_fast_mesh_node
         ${catkin_LIBRARIES}
         ${LVR2_LIBRARIES}
         ${PCL_LIBRARIES}
         )
 
 
+
+add_dependencies(organized_fast_mesh_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 add_dependencies(organized_fast_mesh ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 
 
 install(
-        DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+        DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 install(
-        TARGETS ${PROJECT_NAME}
+        TARGETS organized_fast_mesh organized_fast_mesh_node
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
