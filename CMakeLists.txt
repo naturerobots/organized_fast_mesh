@@ -55,8 +55,8 @@ catkin_package(
         LIBRARIES ${PROJECT_NAME}
         DEPENDS LVR2 PCL
 )
-
-add_executable(organized_fast_mesh src/organized_fast_mesh.cpp src/organized_fast_mesh_generator.cpp)
+add_library(organized_fast_mesh src/organized_fast_mesh.cpp src/organized_fast_mesh_generator.cpp)
+#add_executable(organized_fast_mesh src/organized_fast_mesh.cpp src/organized_fast_mesh_generator.cpp)
 
 target_link_libraries(organized_fast_mesh
         ${catkin_LIBRARIES}
