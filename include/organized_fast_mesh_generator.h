@@ -45,6 +45,9 @@
 
 #ifndef ORGANIZED_FAST_MESH_GENERATOR_H_
 #define ORGANIZED_FAST_MESH_GENERATOR_H_
+
+#include <lvr2/geometry/HalfEdgeMesh.hpp>
+
 #include <lvr2/reconstruction/MeshGenerator.hpp>
 #include <lvr2/geometry/BaseMesh.hpp>
 #include <lvr2/geometry/ColorVertex.hpp>
@@ -52,133 +55,153 @@
 #include <lvr2/geometry/HalfEdgeVertex.hpp>
 #include "lvr2/geometry/BaseMesh.hpp"
 #include <lvr2/display/PointCloud.hpp>
-//TODO Thomas fragen was das gemacht hat
-//#include <lvr/geometry/Tesselator.hpp>
 #include <lvr2/geometry/BaseMesh.hpp>
-#include <lvr2/types/PointBuffer.hpp>
-#include <pcl-1.10/pcl/point_types.h>
-#include <pcl-1.10/pcl/point_cloud.h>
+#include <mesh_msgs/MeshVertexColorsStamped.h>
 
 
 /**
  * \brief Generates an organized fast mesh out of an organized point cloud
  */
-//old version
-//class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<float, int>, lvr2::Normal<float> >{
-class OrganizedFastMeshGenerator : public lvr2::MeshGenerator<lvr2::ColorVertex<float, int>>,lvr2::Normal<float>{
+//#TODO delete MeshGenarator
+class OrganizedFastMeshGenerator {
     public:
-    /**
-     * \brief Constrcutor
-     * \param organized_scan The organized pcl point cloud 
-     */
 
-   OrganizedFastMeshGenerator(pcl::PointCloud<pcl::PointNormal>& organized_scan);
-   //OrganizedFastMeshGenerator(lvr2::PointCloud& organized_scan);
     /**
-     * \brief generates the organized fast mesh
-     * \param a reference to the mesh to fill with the data
+     *  param organized_scan The organized cloud as lvr2 PointBuffer, height and widht of the cloud
+     * to reorganized the cloud (the LVR2 Point Buffer is unorganized but with the knowlegde of height and width you can reorganizde the cloud
+     * @param rowstep step size per row
+     * @param calstep step size per colum
+     * @param theta_start_of_cloud theta of the first row
+     * @param theta_inc increment per row
+     * @param phi_start_of_cloud phi of the first colum
+     * @param phi_inc incremnet per colum
      */
-    /*oldversion
-   virtual void getMesh(lvr2::BaseMesh<lvr2::ColorVertex<float, int>, lvr2::Normal<float> >>& mesh);
+    OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer, uint32_t heightOfCloud,
+            uint32_t widthOfCloud, int rowstep =1, int calstep =1, float theta_min =-6.28319,float theta_max=6.28319, float theta_start_of_cloud =0, float theta_inc=0,float phi_min =-6.28319,float phi_max=6.28319, float phi_start_of_cloud =0, float phi_inc=0);
 
-    */
-    virtual void getMesh(lvr2::BaseMesh<lvr2::BaseVector<float>>& mesh);
+
+
+
+    void getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::MeshVertexColorsStamped &color_msg);
+
     /**
      * \brief sets the maximum edge length to filter big leaps in the 3D depth data
      */
     void setEdgeThreshold(float dist);
-    
-  	bool getContour(std::vector<int>& contour_indices);
-  	
-    //void fillContour(std::vector<int>& contour_indices, lvr2::BaseMesh<lvr2::ColorVertex<float, int>, lvr2::Normal<float> >& mesh, std::vector<int>& fillup_indices);
-  private:
 
-	void normalize(int& x, int& y);
+    bool getContour(std::vector<int> &contour_indices);
 
-    /**
-     * \brief converts a pcl point into a lvr color vertex
-     * \param in pcl point
-     * \param out lvr point
+    void fillContour(std::vector<int> &contour_indices, lvr2::MeshBuffer &mesh, std::vector<int> &fillup_indices);
 
-    **/
+      //! \map old indices to new indices, invalid indices are -1
+    std::map<int, int> index_map;
 
-    void pclToLvrNormal(pcl::PointNormal& in, lvr2::Normalf& out);
-
-    /**
-     * \brief converts a pcl point into a lvr color vertex
-     * \param in pcl point
-     * \param out lvr point
-     **/
-
-    void pclToLvrVertex(pcl::PointNormal& in, lvr2::ColorVertex<float, int>& out);
-    
-    void pclToLvrVertex(pcl::PointNormal& in, lvr2::Vertexf& out);
-    
-    void lvrToPclVertex(lvr2::Vertexf& vertex, lvr::2Normalf& normal, pcl::PointNormal& out);
-
-    
-    /**
+        /**
      * \brief calculates the corresponding index for x and y
      * \param x x-coord
      * \param y y-coord
      * \return index for x and y
      */
-
     uint32_t toIndex(int x, int y);
+
+    uint32_t getheight(){
+        return this->heightOfCloud;
+    }
+
+    uint32_t getwidth(){
+        return this->widthOfCloud;
+    }
+
+    private:
+
+    void normalize(int &x, int &y);
+
+
+
+
     /**
     * \brief checks if the given vertex exists
     * \param vertex The vertex to check for existence
     * \return true if all coords are not nan
     */
-    bool pointExists(lvr::Vertexf& vertex);
+    bool pointExists(lvr2::BaseVector<float> &vertex);
 
-    bool pointExists(pcl::PointNormal& point);
+    //TODO delete ??
+    bool pointExists(lvr2::ColorVertex<float, int> &vertex);
 
-
-    /**
-     * \brief checks if the given vertex exists
-     * \param vertex The vertex to check for existence
-     * \return true if all coords are not nan
-     */
-    bool pointExists(lvr2::ColorVertex<float, int>& vertex);
 
     /**
      * \brief checks if the given normal exists
      * \param normal The normal to check for existence
      * \return true if all coords are not nan
      */
-    bool normalExists(lvr::Normalf& normal);
+    bool normalExists(lvr2::Normal<float> &normal);
 
     /**
      * \brief tests if the face has long edges
      */
-
-
     bool hasLongEdge(int a, int b, int c, float sqr_edge_threshold);
-    
-    void showField(std::map<int, int>& index_map, int x, int y);
-	  
-    bool findContour(std::map<int, int>& index_map, std::vector<int>& contour_indices, int start_x, int start_y, int end_x, int end_y);
-    
-	bool isValid(int x, int y);
 
-	bool inBounds(int x, int y);
+    void showField(std::map<int, int> &index_map, int x, int y);
+
+    bool findContour(std::map<int, int> &index_map, std::vector<int> &contour_indices, int start_x, int start_y, int end_x,
+                     int end_y);
+
+    bool isValid(int x, int y);
+
+    bool inBounds(int x, int y);
+
+    /**
+     * adds the points and normals of the mesh in to the pointVec and normalVec
+     * @param mes
+     * @param pointVec
+     * @param normalVec
+     */
+    void lvr2MeshtoStdVector(lvr2::MeshBuffer &mes, std::vector<float> &pointVec, std::vector<float> &normalVec);
+
+    /**
+     * adds the points and normals from the mesh in std::vec for a easier handling of the arrays
+     * @param mes
+     * @param pointVec
+     * @param normalVec
+     */
+    void putStdVectorInMesh(lvr2::MeshBuffer &mes, std::vector<float> &pointVec, std::vector<float> &normalVec);
+
+    /**
+     * add faces from a std:vec to the mesh
+     * @param mes
+     * @param faceVec
+     */
+    void adFacetoMeshBuffer(lvr2::MeshBuffer &mes, std::vector<int> faceVec);
+    /**
+     * check if the point pass the conditions
+     * @param i
+     * @return
+     */
+    bool isPointtoLook (int i);
 
     //! \holds the organized point cloud
-    pcl::PointCloud<pcl::PointNormal> organized_scan;
-    //lvr2::PointCloud organized_scan;
-    pcl::PointCloud<pcl::PointNormal>::Ptr mesh_points;
-    //lvr2::PointCloud* mesh_points;
+    lvr2::PointBuffer cloudBuffer;
+    //! \holds the height and width to reorganized the cloudBuffer
+    uint32_t heightOfCloud;
+    uint32_t widthOfCloud;
+
+
     //! \holds the vertices in the same order as in the mesh
-    std::vector<lvr2::ColorVertex<float, int> >vertices;
+    std::vector <lvr2::ColorVertex<float, int>> vertices;
     //! \threshold value for the longe edge test
     float sqr_edge_threshold;
-    //! \map old indices to new indices, invalid indices are -1
-    std::map<int, int> index_map;
-    
     size_t index_map_index;
-
-    
+    int row_step;
+    int cal_step;
+    float theta_min =-6.28319;
+    float theta_max=6.28319;
+    float theta_start_of_cloud =0;
+    float theta_inc=0;
+    float phi_min =-6.28319;
+    float phi_max=6.28319;
+    float phi_start_of_cloud =0;
+    float phi_inc=0;
 
 };
 
