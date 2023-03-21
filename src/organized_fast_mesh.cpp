@@ -54,6 +54,7 @@ typedef lvr2::ColorVertex<float, int> VertexType;
 typedef lvr2::Normal<float> NormalType;
 
 
+
 OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
         : nh_(nh) {
 
