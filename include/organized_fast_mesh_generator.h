@@ -77,7 +77,7 @@ class OrganizedFastMeshGenerator {
      * @param phi_inc incremnet per colum
      */
     OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer, uint32_t heightOfCloud,
-            uint32_t widthOfCloud, int rowstep =1, int calstep =1, float theta_min =-6.28319,float theta_max=6.28319, float theta_start_of_cloud =0, float theta_inc=0,float phi_min =-6.28319,float phi_max=6.28319, float phi_start_of_cloud =0, float phi_inc=0);
+            uint32_t widthOfCloud, int rowstep =1, int calstep =1,float left_wheel =0,float right_wheel =0, float delta =0, float min_x =-std::numeric_limits<float>::infinity(), float max_z =  std::numeric_limits<float>::infinity());
 
 
 
@@ -115,21 +115,6 @@ class OrganizedFastMeshGenerator {
     private:
 
     void normalize(int &x, int &y);
-
-
-
-
-    /**
-    * \brief checks if the given vertex exists
-    * \param vertex The vertex to check for existence
-    * \return true if all coords are not nan
-    */
-    bool pointExists(lvr2::BaseVector<float> &vertex);
-
-    //TODO delete ??
-    bool pointExists(lvr2::ColorVertex<float, int> &vertex);
-
-
     /**
      * \brief checks if the given normal exists
      * \param normal The normal to check for existence
@@ -169,16 +154,16 @@ class OrganizedFastMeshGenerator {
 
     /**
      * add faces from a std:vec to the mesh
-     * @param mes
+     * @param mesh
      * @param faceVec
      */
     void adFacetoMeshBuffer(lvr2::MeshBuffer &mes, std::vector<int> faceVec);
     /**
      * check if the point pass the conditions
-     * @param i
-     * @return
+     * @param point point to check
+     * @return bool if the point part of the mesh
      */
-    bool isPointtoLook (int i);
+    bool pointIsPartofMesh (lvr2::ColorVertex<float, int> point);
 
     //! \holds the organized point cloud
     lvr2::PointBuffer cloudBuffer;
@@ -194,15 +179,11 @@ class OrganizedFastMeshGenerator {
     size_t index_map_index;
     int row_step;
     int cal_step;
-    float theta_min =-6.28319;
-    float theta_max=6.28319;
-    float theta_start_of_cloud =0;
-    float theta_inc=0;
-    float phi_min =-6.28319;
-    float phi_max=6.28319;
-    float phi_start_of_cloud =0;
-    float phi_inc=0;
-
+    float left_wheel;
+    float right_wheel;
+    float delta;
+    float min_x;
+    float max_z;
 };
 
 #endif /* organized_fast_mesh_generator.h */

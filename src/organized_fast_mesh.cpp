@@ -54,7 +54,6 @@ typedef lvr2::ColorVertex<float, int> VertexType;
 typedef lvr2::Normal<float> NormalType;
 
 
-
 OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
         : nh_(nh) {
 
@@ -65,6 +64,15 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
 
     ros::NodeHandle p_nh_("~");
     p_nh_.param("edge_threshold", edge_threshold, 0.7);
+    p_nh_.param("row_step", row_step, 1);
+    p_nh_.param("cal_step", cal_step, 1);
+    p_nh_.param("left_wheel", row_step, 1);
+    p_nh_.param("min_x", min_x, -std::numeric_limits<float>::infinity());
+    p_nh_.param("max_z", max_z, std::numeric_limits<float>::infinity());
+    this->right_wheel=0.5;
+    this->left_wheel=-0.5;
+    this->delta=0.3;
+
     //set on true to fill up base holes but this feature isn't working in this version
     p_nh_.param("fillup_base_hole", fillup_base_hole, false);
 
@@ -80,9 +88,10 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
     //convert from ROS to LVR2
     lvr2::PointBuffer pointBuffer;
+
     lvr_ros::fromPointCloud2ToPointBuffer(cloud, pointBuffer);
 
-    OrganizedFastMeshGenerator ofmg(pointBuffer, cloud.height, cloud.width,2,1,-0.7,0.0,0.785398,-0.012271846303,3.25, 3.75,6.28319,-0.006108652);
+    OrganizedFastMeshGenerator ofmg(pointBuffer, cloud.height, cloud.width,row_step,cal_step,left_wheel,right_wheel,delta,min_x,max_z);
     ofmg.setEdgeThreshold(edge_threshold);
 
 

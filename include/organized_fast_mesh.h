@@ -77,7 +77,14 @@ private:
             mesh_msgs::MeshGeometryStamped &mesh_msg, mesh_msgs::MeshVertexColorsStamped &color_msg);
 
     double edge_threshold;
+    int cal_step;
+    int row_step;
     bool fillup_base_hole;
+    float left_wheel;
+    float right_wheel;
+    float delta;
+    float min_x;
+    float max_z;
 
 };
 

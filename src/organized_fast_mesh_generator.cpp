@@ -64,18 +64,15 @@
 
 
 OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer , uint32_t heightOfCloud,
-                                                       uint32_t widthOfCloud, int row_step, int cal_step, float theta_min,float theta_max, float theta_start_of_cloud , float theta_inc,float phi_min,float phi_max, float phi_start_of_cloud , float phi_inc )
+                                                       uint32_t widthOfCloud, int row_step, int cal_step,float left_wheel, float right_wheel, float delta,  float min_x, float max_z )
         : cloudBuffer(cloudBuffer), heightOfCloud(heightOfCloud), widthOfCloud(widthOfCloud) {
     this->row_step=row_step;
     this->cal_step=cal_step;
-    this->theta_inc= theta_inc;
-    this->theta_start_of_cloud=theta_start_of_cloud;
-    this->theta_min=theta_min;
-    this->theta_max=theta_max;
-    this->phi_inc= phi_inc;
-    this->phi_start_of_cloud=phi_start_of_cloud;
-    this->phi_min=phi_min;
-    this->phi_max=phi_max;
+    this->right_wheel=right_wheel;
+    this->left_wheel=left_wheel;
+    this->delta=delta;
+    this->min_x=min_x;
+    this->max_z=max_z;
     setEdgeThreshold(0.5);
 
 }
@@ -102,48 +99,54 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
 
 
     for (int i = 0; i < cloudBuffer.numPoints() * 3; i += 3) {
+        int x=(i/3)%widthOfCloud;
+        int y= ((i/3)-x)/widthOfCloud;
+        if(x%cal_step==0 && y%row_step==0) {
+            lvr2::ColorVertex<float, int> point(cloudPoints[i], cloudPoints[i + 1],
+                                                cloudPoints[i + 2]); // point at (x,y)
+            lvr2::Normal<float> normal;
 
 
-        lvr2::ColorVertex<float, int> point(cloudPoints[i], cloudPoints[i + 1], cloudPoints[i + 2]); // point at (x,y)
-        lvr2::Normal<float> normal;
-
-
-        if (cloudBuffer.hasNormals()) {
-            normal = lvr2::Normal<float>(cloudNormals[i],
-                                         cloudNormals[i + 1],
-                                         cloudNormals[i + 2]);
-        } else {
-            normal = lvr2::Normal<float>(0, 1, 0); // normal at (x,y);
-        }
-
-        if (std::isnan(point.x) || std::isnan(point.y) || std::isnan(point.z) ||
-            point.z == 0 && point.y == 0 && point.x == 0) {
-            // index maps to -1
-            index_map[index_map_index] = -1;
-            index_map_index++;
-        } else { // if the point exists (not nan)
-
-            if(point.x>=0.2 && ((point.y>=-0.7 && point.y<=-0.3) || (point.y >=0.3 && point.y<=0.7)) && point.z <=0.3) {
-
-                // index maps to existing vertex in the mesh
-                index_map[index_map_index] = index_cnt;
-                index_map_index++;
-                index_cnt++;
-                vecPoint.push_back(point.x);
-                vecPoint.push_back(point.y);
-                vecPoint.push_back(point.z);
-                vecNormal.push_back(normal.x);
-                vecNormal.push_back(normal.y);
-                vecNormal.push_back(normal.z);
-
-                vertices.push_back(point);
+            if (cloudBuffer.hasNormals()) {
+                normal = lvr2::Normal<float>(cloudNormals[i],
+                                             cloudNormals[i + 1],
+                                             cloudNormals[i + 2]);
+            } else {
+                normal = lvr2::Normal<float>(0, 1, 0); // normal at (x,y);
             }
-            else{
+
+            if (std::isnan(point.x) || std::isnan(point.y) || std::isnan(point.z) ||
+                point.z == 0 && point.y == 0 && point.x == 0) {
+                // index maps to -1
                 index_map[index_map_index] = -1;
                 index_map_index++;
+            } else { // if the point exists (not nan)
+
+                if (pointIsPartofMesh(point)) {
+
+                    // index maps to existing vertex in the mesh
+                    index_map[index_map_index] = index_cnt;
+                    index_map_index++;
+                    index_cnt++;
+                    vecPoint.push_back(point.x);
+                    vecPoint.push_back(point.y);
+                    vecPoint.push_back(point.z);
+                    vecNormal.push_back(normal.x);
+                    vecNormal.push_back(normal.y);
+                    vecNormal.push_back(normal.z);
+
+                    vertices.push_back(point);
+                } else {
+                    index_map[index_map_index] = -1;
+                    index_map_index++;
+                }
+
+
             }
-
-
+        }
+        else {
+            index_map[index_map_index] = -1;
+            index_map_index++;
         }
     }
 
@@ -821,16 +824,17 @@ pcl::PointIndices::Ptr in_radius_indices (new pcl::PointIndices);
     }
     mesh.setFaceIndices(newFaceArr, newFaces.size() / 3);
 }
-/**
-bool OrganizedFastMeshGenerator::isPointtoLook (int i){
-    int x=i%widthOfCloud;
-    int y= (i-x)/widthOfCloud;
-    float theta = theta_start_of_cloud+(theta_inc*y);
-    float phi = phi_start_of_cloud+(phi_inc*x);
-    if (x%cal_step ==0 && y%row_step ==0  && theta >theta_min && theta<theta_max && phi >phi_min && phi<phi_max){
+
+bool OrganizedFastMeshGenerator::pointIsPartofMesh(lvr2::ColorVertex<float, int> point){
+    if(right_wheel==left_wheel){
         return true;
     }else{
-        return false;
+        if(point.x>min_x && ((left_wheel-delta< point.y && left_wheel+delta > point.y) || (point.y >right_wheel-delta && point.y<right_wheel+delta)) && point.z <=max_z){
+            return true;
+        }
+        else{
+            return false;
+        }
+
     }
 }
-**/
