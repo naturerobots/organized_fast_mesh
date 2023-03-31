@@ -677,8 +677,6 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int> &contour_indices, 
     mesh.setVertices(pointArr, pointVec.size() / 3);
     mesh.setVertexNormals(normalArr);
     /*
-
-    //why ??
 pcl::PointIndices::Ptr in_radius_indices (new pcl::PointIndices);
 
   std::vector<float> radius_distances;
