@@ -1,3 +1,4 @@
 sensor_msgs/PointCloud2 organized_scan
 ---
-mesh_msgs/TriangleMeshStamped organized_fast_mesh
+mesh_msgs/MeshGeometryStamped organized_fast_mesh
+mesh_msgs/MeshVertexColors vertex_colors
