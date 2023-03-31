@@ -447,30 +447,6 @@ inline uint32_t OrganizedFastMeshGenerator::toIndex(int x, int y) {
     return y * width + x;
 }
 
-//delete??
-inline bool OrganizedFastMeshGenerator::pointExists(lvr2::ColorVertex<float, int> &vertex) {
-    return
-            boost::math::isfinite<float>(vertex.x) &&
-            boost::math::isfinite<float>(vertex.y) &&
-            boost::math::isfinite<float>(vertex.z);
-}
-
-inline bool OrganizedFastMeshGenerator::pointExists(lvr2::BaseVector<float> &vertex) {
-    return
-            boost::math::isfinite<float>(vertex.x) &&
-            boost::math::isfinite<float>(vertex.y) &&
-            boost::math::isfinite<float>(vertex.z);
-}
-
-
-inline bool OrganizedFastMeshGenerator::normalExists(lvr2::Normal<float> &normal) {
-    return
-            boost::math::isfinite<float>(normal.x) &&
-            boost::math::isfinite<float>(normal.y) &&
-            boost::math::isfinite<float>(normal.z);
-}
-
-
 inline void OrganizedFastMeshGenerator::normalize(int &x, int &y) {
     uint32_t height = heightOfCloud;
     uint32_t width = widthOfCloud;
