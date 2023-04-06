@@ -198,7 +198,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             // create top triangle if all vertices exists
             if (idx != -1 && idx_rb != -1 && idx_r != -1) {
                 // check if there are longer edges then the threshold
-                if (!hasLongEdge(idx, idx_rb, idx_r, sqr_edge_threshold*pow(((row_step+cal_step)/2),2))) {
+                if (!hasLongEdge(idx, idx_rb, idx_r, vecPoint[idx*3]*sqr_edge_threshold*pow(((row_step+cal_step)/2),2))) {
 
 
                     triangleIndexVec.push_back(idx);
@@ -211,7 +211,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             // create bottom triangle if all vertices exists
             if (idx != -1 && idx_b != -1 && idx_rb != -1) {
                 // check if there are longer edges then the threshold
-                if (!hasLongEdge(idx, idx_b, idx_rb, sqr_edge_threshold*pow(((row_step+cal_step)/2),2))) {
+                if (!hasLongEdge(idx, idx_b, idx_rb, vecPoint[idx*3]*sqr_edge_threshold*pow(((row_step+cal_step)/2),2))) {
 
 
                     triangleIndexVec.push_back(idx);
@@ -446,6 +446,8 @@ inline uint32_t OrganizedFastMeshGenerator::toIndex(int x, int y) {
     //return x*height+y;
     return y * width + x;
 }
+
+
 
 inline void OrganizedFastMeshGenerator::normalize(int &x, int &y) {
     uint32_t height = heightOfCloud;
@@ -802,10 +804,17 @@ pcl::PointIndices::Ptr in_radius_indices (new pcl::PointIndices);
 }
 
 bool OrganizedFastMeshGenerator::pointIsPartofMesh(lvr2::ColorVertex<float, int> point){
+    return true;
     if(right_wheel==left_wheel){
-        return true;
+        if(point.x>min_x && point.z <=max_z){
+
+        return true;}
+        else{
+            return false;
+        }
     }else{
-        if(point.x>min_x && ((left_wheel-delta< point.y && left_wheel+delta > point.y) || (point.y >right_wheel-delta && point.y<right_wheel+delta)) && point.z <=max_z){
+       //(-1*right_wheel-delta < point.z && -1*right_wheel+delta > point.z)
+        if(point.x>min_x && point.y >=-max_z && ((0.2< point.z && 0.8> point.z) || (point.z >-0.8 && point.z<-0.2))){
             return true;
         }
         else{

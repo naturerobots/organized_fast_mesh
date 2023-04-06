@@ -63,14 +63,14 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
     service_ = nh_.advertiseService("organized_fast_mesh", &OrganizedFastMesh::generateOrganizedFastMeshSrv, this);
 
     ros::NodeHandle p_nh_("~");
-    p_nh_.param("edge_threshold", edge_threshold, 0.7);
+    p_nh_.param("edge_threshold", edge_threshold, 0.5);
     p_nh_.param("row_step", row_step, 1);
     p_nh_.param("cal_step", cal_step, 1);
-    p_nh_.param("left_wheel", row_step, 1);
     p_nh_.param("min_x", min_x, -std::numeric_limits<float>::infinity());
     p_nh_.param("max_z", max_z, std::numeric_limits<float>::infinity());
-    this->right_wheel=0.5;
+
     this->left_wheel=-0.5;
+    this->right_wheel=0.5;
     this->delta=0.3;
 
     //set on true to fill up base holes but this feature isn't working in this version
@@ -91,7 +91,7 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
     lvr_ros::fromPointCloud2ToPointBuffer(cloud, pointBuffer);
 
-    OrganizedFastMeshGenerator ofmg(pointBuffer, cloud.height, cloud.width,row_step,cal_step,left_wheel,right_wheel,delta,min_x,max_z);
+    OrganizedFastMeshGenerator ofmg(pointBuffer, cloud.height, cloud.width,row_step,cal_step,-0.5,0.5,1.0,1.0,0.3);
     ofmg.setEdgeThreshold(edge_threshold);
 
 
