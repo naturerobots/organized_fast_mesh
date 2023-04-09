@@ -64,14 +64,12 @@
 
 
 OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer , uint32_t heightOfCloud,
-                                                       uint32_t widthOfCloud, int row_step, int cal_step,    lvr2::BaseVector<float> right_wheel[8], lvr2::BaseVector<float> left_wheel[8])
+                                                       uint32_t widthOfCloud, int row_step, int cal_step,    lvr2::BaseVector<float>* right_wheel, lvr2::BaseVector<float>* left_wheel)
         : cloudBuffer(cloudBuffer), heightOfCloud(heightOfCloud), widthOfCloud(widthOfCloud) {
     this->row_step=row_step;
     this->cal_step=cal_step;
-    for(int i=0;i<8;i++) {
-        this->right_wheel[i] = right_wheel[i];
-        this->left_wheel[i] = left_wheel[i];
-    }
+    this->right_wheel = right_wheel;
+    this->left_wheel= left_wheel;
     setEdgeThreshold(0.5);
 
 }
@@ -808,13 +806,8 @@ pcl::PointIndices::Ptr in_radius_indices (new pcl::PointIndices);
 }
 
 bool OrganizedFastMeshGenerator::pointIsPartofMesh(lvr2::ColorVertex<float, int> point){
-    if(right_wheel==left_wheel){
-        if(point.x>min_x && point.z <=max_z){
-
-        return true;}
-        else{
-            return false;
-        }
+    if(right_wheel == nullptr || left_wheel ==nullptr){
+        return true;
     }else{
         return isInsideBox(point,right_wheel) || isInsideBox(point,left_wheel);
 

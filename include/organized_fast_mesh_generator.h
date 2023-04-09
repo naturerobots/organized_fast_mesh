@@ -77,7 +77,7 @@ class OrganizedFastMeshGenerator {
      * @param phi_inc incremnet per colum
      */
     OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer , uint32_t heightOfCloud,
-                                                           uint32_t widthOfCloud, int row_step, int cal_step,    lvr2::BaseVector<float> right_wheel[4], lvr2::BaseVector<float> left_wheel[4]);
+                                                           uint32_t widthOfCloud, int row_step, int cal_step,    lvr2::BaseVector<float>* right_wheel = nullptr, lvr2::BaseVector<float>* left_wheel = nullptr);
 
 
 
@@ -180,8 +180,8 @@ class OrganizedFastMeshGenerator {
     size_t index_map_index;
     int row_step;
     int cal_step;
-    lvr2::BaseVector<float> left_wheel[8];
-    lvr2::BaseVector<float> right_wheel[8];
+    lvr2::BaseVector<float>* left_wheel;
+    lvr2::BaseVector<float>* right_wheel;
     float min_x;
     float max_z;
 };

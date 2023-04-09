@@ -88,29 +88,9 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
     lvr2::PointBuffer pointBuffer;
 
     lvr_ros::fromPointCloud2ToPointBuffer(cloud, pointBuffer);
-    lvr2::BaseVector<float> left_wheel[8];
-    lvr2::BaseVector<float> right_wheel[8];
-    left_wheel[0]= lvr2::BaseVector<float>(10,0,-0.8);
-    left_wheel[1]= lvr2::BaseVector<float>(-0,0,-0.5);
-    left_wheel[2]= lvr2::BaseVector<float>(10,15,-0.8);
-    left_wheel[3]= lvr2::BaseVector<float>(-0,15,-0.5);
 
-    left_wheel[4]= lvr2::BaseVector<float>(10,0,-0.8);
-    left_wheel[5]= lvr2::BaseVector<float>(-0,0,-0.5);
-    left_wheel[6]= lvr2::BaseVector<float>(10,15,-0.8);
-    left_wheel[7]= lvr2::BaseVector<float>(-0,15,-0.5);
 
-    right_wheel[0]= lvr2::BaseVector<float>(-0,0,0.8);
-    right_wheel[1]= lvr2::BaseVector<float>(10,0,0.5);
-    right_wheel[2]= lvr2::BaseVector<float>(0,15,0.8);
-    right_wheel[3]= lvr2::BaseVector<float>(10,15,0.5);
-
-    right_wheel[4]= lvr2::BaseVector<float>(-0,0,0.8);
-    right_wheel[5]= lvr2::BaseVector<float>(10,0,0.5);
-    right_wheel[6]= lvr2::BaseVector<float>(0,15,0.8);
-    right_wheel[7]= lvr2::BaseVector<float>(10,15,0.5);
-
-    OrganizedFastMeshGenerator ofmg(pointBuffer, cloud.height, cloud.width,row_step,cal_step,right_wheel,left_wheel);
+    OrganizedFastMeshGenerator ofmg(pointBuffer, cloud.height, cloud.width,row_step,cal_step);
     ofmg.setEdgeThreshold(edge_threshold);
 
 
