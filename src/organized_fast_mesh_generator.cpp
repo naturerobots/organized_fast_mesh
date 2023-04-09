@@ -64,15 +64,14 @@
 
 
 OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer , uint32_t heightOfCloud,
-                                                       uint32_t widthOfCloud, int row_step, int cal_step,float left_wheel, float right_wheel, float delta,  float min_x, float max_z )
+                                                       uint32_t widthOfCloud, int row_step, int cal_step,    lvr2::BaseVector<float> right_wheel[8], lvr2::BaseVector<float> left_wheel[8])
         : cloudBuffer(cloudBuffer), heightOfCloud(heightOfCloud), widthOfCloud(widthOfCloud) {
     this->row_step=row_step;
     this->cal_step=cal_step;
-    this->right_wheel=right_wheel;
-    this->left_wheel=left_wheel;
-    this->delta=delta;
-    this->min_x=min_x;
-    this->max_z=max_z;
+    for(int i=0;i<8;i++) {
+        this->right_wheel[i] = right_wheel[i];
+        this->left_wheel[i] = left_wheel[i];
+    }
     setEdgeThreshold(0.5);
 
 }
@@ -809,7 +808,6 @@ pcl::PointIndices::Ptr in_radius_indices (new pcl::PointIndices);
 }
 
 bool OrganizedFastMeshGenerator::pointIsPartofMesh(lvr2::ColorVertex<float, int> point){
-    return true;
     if(right_wheel==left_wheel){
         if(point.x>min_x && point.z <=max_z){
 
@@ -818,13 +816,32 @@ bool OrganizedFastMeshGenerator::pointIsPartofMesh(lvr2::ColorVertex<float, int>
             return false;
         }
     }else{
-       //(-1*right_wheel-delta < point.z && -1*right_wheel+delta > point.z)
-        if(point.x>min_x && point.y >=-max_z && ((0.2< point.z && 0.8> point.z) || (point.z >-0.8 && point.z<-0.2))){
-            return true;
-        }
-        else{
-            return false;
-        }
+        return isInsideBox(point,right_wheel) || isInsideBox(point,left_wheel);
 
     }
 }
+
+bool OrganizedFastMeshGenerator::isInsideBox(lvr2::BaseVector<float> p, lvr2::BaseVector<float>* vertices) {
+    // Berechne die minimalen und maximalen Grenzwerte der Koordinaten des Quaders
+    lvr2::BaseVector<float> bMin, bMax;
+    bMin.x = bMax.x = vertices[0].x;
+    bMin.y = bMax.y = vertices[0].y;
+    bMin.z = bMax.z = vertices[0].z;
+    for (int i = 1; i < 8; i++) {
+        if (vertices[i].x < bMin.x) bMin.x = vertices[i].x;
+        if (vertices[i].x > bMax.x) bMax.x = vertices[i].x;
+        if (vertices[i].y < bMin.y) bMin.y = vertices[i].y;
+        if (vertices[i].y > bMax.y) bMax.y = vertices[i].y;
+        if (vertices[i].z < bMin.z) bMin.z = vertices[i].z;
+        if (vertices[i].z > bMax.z) bMax.z = vertices[i].z;
+    }
+
+    // Überprüfe, ob der Punkt innerhalb des Quaders liegt
+    if (p.x < bMin.x || p.x > bMax.x ||
+        p.y < bMin.y || p.y > bMax.y ||
+        p.z < bMin.z || p.z > bMax.z)
+        return false;
+    else
+        return true;
+}
+

@@ -66,12 +66,8 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
     p_nh_.param("edge_threshold", edge_threshold, 0.5);
     p_nh_.param("row_step", row_step, 1);
     p_nh_.param("cal_step", cal_step, 1);
-    p_nh_.param("min_x", min_x, -std::numeric_limits<float>::infinity());
-    p_nh_.param("max_z", max_z, std::numeric_limits<float>::infinity());
 
-    this->left_wheel=-0.5;
-    this->right_wheel=0.5;
-    this->delta=0.3;
+
 
     //set on true to fill up base holes but this feature isn't working in this version
     p_nh_.param("fillup_base_hole", fillup_base_hole, false);
@@ -81,6 +77,8 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
 bool OrganizedFastMesh::generateOrganizedFastMesh(
         const sensor_msgs::PointCloud2 &cloud, mesh_msgs::MeshGeometryStamped &mesh_msg,
         mesh_msgs::MeshVertexColorsStamped &color_msg) {
+
+
     if (cloud.height < 2) {
         ROS_WARN("Received unorganized point cloud!");
         return false;
@@ -90,13 +88,35 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
     lvr2::PointBuffer pointBuffer;
 
     lvr_ros::fromPointCloud2ToPointBuffer(cloud, pointBuffer);
+    lvr2::BaseVector<float> left_wheel[8];
+    lvr2::BaseVector<float> right_wheel[8];
+    left_wheel[0]= lvr2::BaseVector<float>(10,0,-0.8);
+    left_wheel[1]= lvr2::BaseVector<float>(-0,0,-0.5);
+    left_wheel[2]= lvr2::BaseVector<float>(10,15,-0.8);
+    left_wheel[3]= lvr2::BaseVector<float>(-0,15,-0.5);
 
-    OrganizedFastMeshGenerator ofmg(pointBuffer, cloud.height, cloud.width,row_step,cal_step,-0.5,0.5,1.0,1.0,0.3);
+    left_wheel[4]= lvr2::BaseVector<float>(10,0,-0.8);
+    left_wheel[5]= lvr2::BaseVector<float>(-0,0,-0.5);
+    left_wheel[6]= lvr2::BaseVector<float>(10,15,-0.8);
+    left_wheel[7]= lvr2::BaseVector<float>(-0,15,-0.5);
+
+    right_wheel[0]= lvr2::BaseVector<float>(-0,0,0.8);
+    right_wheel[1]= lvr2::BaseVector<float>(10,0,0.5);
+    right_wheel[2]= lvr2::BaseVector<float>(0,15,0.8);
+    right_wheel[3]= lvr2::BaseVector<float>(10,15,0.5);
+
+    right_wheel[4]= lvr2::BaseVector<float>(-0,0,0.8);
+    right_wheel[5]= lvr2::BaseVector<float>(10,0,0.5);
+    right_wheel[6]= lvr2::BaseVector<float>(0,15,0.8);
+    right_wheel[7]= lvr2::BaseVector<float>(10,15,0.5);
+
+    OrganizedFastMeshGenerator ofmg(pointBuffer, cloud.height, cloud.width,row_step,cal_step,right_wheel,left_wheel);
     ofmg.setEdgeThreshold(edge_threshold);
 
 
     lvr2::MeshBufferPtr mesh_buffer_ptr(new lvr2::MeshBuffer);
     ofmg.getMesh(*mesh_buffer_ptr, color_msg);
+
 
     std::vector<int> contour, fillup_indices;
     //fillup base is not working
@@ -142,6 +162,9 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
         ROS_INFO("Publish organized fast mesh in the %s frame with %d triangles, %d vertices and %d vertex normals",
                  mesh_msg.header.frame_id.c_str(), mesh_msg.mesh_geometry.faces.size(),
                  mesh_msg.mesh_geometry.vertices.size(), mesh_msg.mesh_geometry.vertex_normals.size());
+
+
+
         return true;
     } else {
         ROS_ERROR(

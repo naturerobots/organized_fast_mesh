@@ -76,9 +76,8 @@ class OrganizedFastMeshGenerator {
      * @param phi_start_of_cloud phi of the first colum
      * @param phi_inc incremnet per colum
      */
-    OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer, uint32_t heightOfCloud,
-            uint32_t widthOfCloud, int rowstep =1, int calstep =1,float left_wheel =0,float right_wheel =0, float delta =0, float min_x =-std::numeric_limits<float>::infinity(), float max_z =  std::numeric_limits<float>::infinity());
-
+    OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer , uint32_t heightOfCloud,
+                                                           uint32_t widthOfCloud, int row_step, int cal_step,    lvr2::BaseVector<float> right_wheel[4], lvr2::BaseVector<float> left_wheel[4]);
 
 
 
@@ -113,8 +112,10 @@ class OrganizedFastMeshGenerator {
     }
 
     private:
+    bool isInsideBox(lvr2::BaseVector<float> p, lvr2::BaseVector<float>* vertices);
 
-    void normalize(int &x, int &y);
+
+        void normalize(int &x, int &y);
     /**
      * \brief checks if the given normal exists
      * \param normal The normal to check for existence
@@ -179,9 +180,8 @@ class OrganizedFastMeshGenerator {
     size_t index_map_index;
     int row_step;
     int cal_step;
-    float left_wheel;
-    float right_wheel;
-    float delta;
+    lvr2::BaseVector<float> left_wheel[8];
+    lvr2::BaseVector<float> right_wheel[8];
     float min_x;
     float max_z;
 };
