@@ -3,8 +3,8 @@
   <node name="organized_fast_mesh_velodyne" pkg="organized_fast_mesh" type="organized_fast_mesh" output="screen" >
     <param name="edge_threshold" value="0.7"/>
     <param name="fillup_base_hole" value="false"/>
-    <param name="step" value="1"/>
-
+    <param name="calstep" value="10"/>
+    <param name="rowstep" value="10"/>
     <remap from="input_cloud" to="velodyne_points_with_normals" />
     <remap from="organized_mesh" to="organized_velodyne_mesh" />
 

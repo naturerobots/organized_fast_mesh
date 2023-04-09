@@ -64,10 +64,10 @@
 
 
 OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer , uint32_t heightOfCloud,
-                                                       uint32_t widthOfCloud, int step,   lvr2::BaseVector<float>* right_wheel, lvr2::BaseVector<float>* left_wheel)
+                                                       uint32_t widthOfCloud, int row_step, int cal_step,    lvr2::BaseVector<float>* right_wheel, lvr2::BaseVector<float>* left_wheel)
         : cloudBuffer(cloudBuffer), heightOfCloud(heightOfCloud), widthOfCloud(widthOfCloud) {
-    this->step=step;
-
+    this->row_step=row_step;
+    this->cal_step=cal_step;
     this->right_wheel = right_wheel;
     this->left_wheel= left_wheel;
     setEdgeThreshold(0.5);
@@ -95,14 +95,14 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
     bool hasColor = false;
 
     int row =0;
-    for (int i = 0; i < cloudBuffer.numPoints() * 3; i += 3*step) {
+    for (int i = 0; i < cloudBuffer.numPoints() * 3; i += 3*row_step) {
         if(row >=widthOfCloud){
-            i=i -(row *3) + (step *3 *widthOfCloud );
+            i=i -(row *3) + (cal_step *3 *widthOfCloud );
             row =0;
         }
         int x=(i/3)%widthOfCloud;
         int y= ((i/3)-x)/widthOfCloud;
-        if(x%step==0 && y%step==0) {
+        if(x%cal_step==0 && y%row_step==0) {
             lvr2::ColorVertex<float, int> point(cloudPoints[i], cloudPoints[i + 1],
                                                 cloudPoints[i + 2]); // point at (x,y)
             lvr2::Normal<float> normal;
@@ -149,7 +149,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             index_map[i/3] = -1;
             index_map_index++;
         }
-        row +=step;
+        row +=row_step;
     }
 
     //possible to add possible colors
@@ -170,12 +170,12 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
 
     // start adding faces to the mesh
     std::vector<unsigned int> triangleIndexVec;
-    for (uint32_t y = 0; y < heightOfCloud; y=y+step) {
-        for (uint32_t x = 0; x < widthOfCloud; x=step+x) {
+    for (uint32_t y = 0; y < heightOfCloud; y=y+row_step) {
+        for (uint32_t x = 0; x < widthOfCloud; x=cal_step+x) {
 
             // get indices around the borders for a 360 degree view
-            uint32_t x_right = (x >= widthOfCloud-step) ? 0 : x + step;
-            uint32_t y_bottom = (y >= heightOfCloud-step) ? 0 : y + step;
+            uint32_t x_right = (x >= widthOfCloud-row_step) ? 0 : x + cal_step;
+            uint32_t y_bottom = (y >= heightOfCloud-cal_step) ? 0 : y + row_step;
 
             // get the corresponding indices in the mesh
 
@@ -200,7 +200,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             // create top triangle if all vertices exists
             if (idx != -1 && idx_rb != -1 && idx_r != -1) {
                 // check if there are longer edges then the threshold
-                if (!hasLongEdge(idx, idx_rb, idx_r, abs(vecPoint[idx*3]+1)*sqr_edge_threshold*pow(((step+step)/2),2))) {
+                if (!hasLongEdge(idx, idx_rb, idx_r, vecPoint[idx*3]*sqr_edge_threshold*pow(((row_step+cal_step)/2),2))) {
 
 
                     triangleIndexVec.push_back(idx);
@@ -213,7 +213,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             // create bottom triangle if all vertices exists
             if (idx != -1 && idx_b != -1 && idx_rb != -1) {
                 // check if there are longer edges then the threshold
-                if (!hasLongEdge(idx, idx_b, idx_rb, abs(vecPoint[idx*3]+1)*sqr_edge_threshold*pow(((step+step)/2),2))) {
+                if (!hasLongEdge(idx, idx_b, idx_rb, vecPoint[idx*3]*sqr_edge_threshold*pow(((row_step+cal_step)/2),2))) {
 
 
                     triangleIndexVec.push_back(idx);
