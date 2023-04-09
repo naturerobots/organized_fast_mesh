@@ -64,8 +64,7 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
 
     ros::NodeHandle p_nh_("~");
     p_nh_.param("edge_threshold", edge_threshold, 0.5);
-    p_nh_.param("row_step", row_step, 1);
-    p_nh_.param("cal_step", cal_step, 1);
+    p_nh_.param("step", step, 1);
 
 
 
@@ -90,7 +89,7 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
     lvr_ros::fromPointCloud2ToPointBuffer(cloud, pointBuffer);
 
 
-    OrganizedFastMeshGenerator ofmg(pointBuffer, cloud.height, cloud.width,row_step,cal_step);
+    OrganizedFastMeshGenerator ofmg(pointBuffer, cloud.height, cloud.width,step);
     ofmg.setEdgeThreshold(edge_threshold);
 
 
