@@ -9,11 +9,11 @@
  *  modification, are permitted provided that the following conditions
  *  are met:
  *
- *   1. Redistributions of source code must retain the above 
+ *   1. Redistributions of source code must retain the above
  *      copyright notice, this list of conditions and the following
  *      disclaimer.
  *
- *   2. Redistributions in binary form must reproduce the above 
+ *   2. Redistributions in binary form must reproduce the above
  *      copyright notice, this list of conditions and the following
  *      disclaimer in the documentation and/or other materials provided
  *      with the distribution.
@@ -32,7 +32,7 @@
  *  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
  *  OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  *  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
@@ -97,8 +97,12 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
     lvr2::floatArr cloudNormals = cloudBuffer.getNormalArray();
     bool hasColor = false;
 
-
-    for (int i = 0; i < cloudBuffer.numPoints() * 3; i += 3) {
+    int row =0;
+    for (int i = 0; i < cloudBuffer.numPoints() * 3; i += 3*row_step) {
+        if(row >=widthOfCloud){
+            i=i -(row *3) + (cal_step *3 *widthOfCloud );
+            row =0;
+        }
         int x=(i/3)%widthOfCloud;
         int y= ((i/3)-x)/widthOfCloud;
         if(x%cal_step==0 && y%row_step==0) {
@@ -118,14 +122,14 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             if (std::isnan(point.x) || std::isnan(point.y) || std::isnan(point.z) ||
                 point.z == 0 && point.y == 0 && point.x == 0) {
                 // index maps to -1
-                index_map[index_map_index] = -1;
+                index_map[i/3] = -1;
                 index_map_index++;
             } else { // if the point exists (not nan)
 
                 if (pointIsPartofMesh(point)) {
 
                     // index maps to existing vertex in the mesh
-                    index_map[index_map_index] = index_cnt;
+                    index_map[i/3] = index_cnt;
                     index_map_index++;
                     index_cnt++;
                     vecPoint.push_back(point.x);
@@ -137,7 +141,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
 
                     vertices.push_back(point);
                 } else {
-                    index_map[index_map_index] = -1;
+                    index_map[i/3] = -1;
                     index_map_index++;
                 }
 
@@ -145,9 +149,10 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             }
         }
         else {
-            index_map[index_map_index] = -1;
+            index_map[i/3] = -1;
             index_map_index++;
         }
+        row +=row_step;
     }
 
     //possible to add possible colors
