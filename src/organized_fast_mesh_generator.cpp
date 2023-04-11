@@ -200,7 +200,8 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             // create top triangle if all vertices exists
             if (idx != -1 && idx_rb != -1 && idx_r != -1) {
                 // check if there are longer edges then the threshold
-                if (!hasLongEdge(idx, idx_rb, idx_r, (abs(vecPoint[idx*3])+1)*sqr_edge_threshold*pow(step,2))) {
+                float distance = sqrt(pow(vecPoint[idx],2)+pow(vecPoint[idx+1],2)+pow(vecPoint[idx+2],2));
+                if (!hasLongEdge(idx, idx_rb, idx_r, (distance+1)*sqr_edge_threshold*step)) {
 
 
                     triangleIndexVec.push_back(idx);
@@ -213,7 +214,8 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             // create bottom triangle if all vertices exists
             if (idx != -1 && idx_b != -1 && idx_rb != -1) {
                 // check if there are longer edges then the threshold
-                if (!hasLongEdge(idx, idx_b, idx_rb, (abs(vecPoint[idx*3])+1)*sqr_edge_threshold*pow(step,2))) {
+                float distance = sqrt(pow(vecPoint[idx],2)+pow(vecPoint[idx+1],2)+pow(vecPoint[idx+2],2));
+                if (!hasLongEdge(idx, idx_b, idx_rb, (distance+1)*sqr_edge_threshold*step)) {
 
 
                     triangleIndexVec.push_back(idx);
@@ -255,7 +257,7 @@ bool OrganizedFastMeshGenerator::getContour(std::vector<int> &contour_indices) {
     start_x = 0;
     start_y = 0;
 
-    //warum so
+
     for (int x = width - 1; x > 0 && !found_contour; x--) {
         if (index_map[widthOfCloud * x + height - 1] != -1) {
             end_x = x;
@@ -806,10 +808,19 @@ pcl::PointIndices::Ptr in_radius_indices (new pcl::PointIndices);
 }
 
 bool OrganizedFastMeshGenerator::pointIsPartofMesh(lvr2::ColorVertex<float, int> point){
-    if(right_wheel == nullptr || left_wheel ==nullptr){
+    if(right_wheel == nullptr && left_wheel ==nullptr){
         return true;
     }else{
-        return isInsideBox(point,right_wheel) || isInsideBox(point,left_wheel);
+        if(right_wheel != nullptr && left_wheel !=nullptr) {
+            return isInsideBox(point, right_wheel) || isInsideBox(point, left_wheel);
+        }
+        else if(right_wheel != nullptr ){
+            return isInsideBox(point, right_wheel);
+        }
+        else if(left_wheel != nullptr ){
+            return isInsideBox(point, left_wheel);
+        }
+
 
     }
 }

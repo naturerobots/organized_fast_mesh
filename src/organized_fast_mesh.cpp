@@ -65,9 +65,6 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
     ros::NodeHandle p_nh_("~");
     p_nh_.param("edge_threshold", edge_threshold, 0.5);
     p_nh_.param("step", step, 1);
-
-
-
     //set on true to fill up base holes but this feature isn't working in this version
     p_nh_.param("fillup_base_hole", fillup_base_hole, false);
 
