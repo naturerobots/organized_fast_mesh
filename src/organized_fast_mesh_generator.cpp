@@ -103,8 +103,8 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
         int x=(i/3)%widthOfCloud;
         int y= ((i/3)-x)/widthOfCloud;
         if(x%step==0 && y%step==0) {
-            lvr2::ColorVertex<float, int> point(cloudPoints[i], cloudPoints[i + 1],
-                                                cloudPoints[i + 2]); // point at (x,y)
+            lvr2::ColorVertex<float, int> point(cloudPoints[i], cloudPoints[i + 2],
+                                                -1*cloudPoints[i + 1]); // point at (x,y)
             lvr2::Normal<float> normal;
 
 
@@ -201,7 +201,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             if (idx != -1 && idx_rb != -1 && idx_r != -1) {
                 // check if there are longer edges then the threshold
                 float distance = sqrt(pow(vecPoint[idx],2)+pow(vecPoint[idx+1],2)+pow(vecPoint[idx+2],2));
-                if (!hasLongEdge(idx, idx_rb, idx_r, (distance/2+1)*sqr_edge_threshold*step)) {
+                if (!hasLongEdge(idx, idx_rb, idx_r, sqr_edge_threshold*step)) {
 
 
                     triangleIndexVec.push_back(idx);
@@ -215,7 +215,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             if (idx != -1 && idx_b != -1 && idx_rb != -1) {
                 // check if there are longer edges then the threshold
                 float distance = sqrt(pow(vecPoint[idx],2)+pow(vecPoint[idx+1],2)+pow(vecPoint[idx+2],2));
-                if (!hasLongEdge(idx, idx_b, idx_rb, (distance/2+1)*sqr_edge_threshold*step)) {
+                if (!hasLongEdge(idx, idx_b, idx_rb, sqr_edge_threshold*step)) {
 
 
                     triangleIndexVec.push_back(idx);
