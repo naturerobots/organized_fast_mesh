@@ -64,10 +64,10 @@
 
 
 OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer , uint32_t heightOfCloud,
-                                                       uint32_t widthOfCloud, int step,    lvr2::BaseVector<float>* right_wheel, lvr2::BaseVector<float>* left_wheel)
+                                                       uint32_t widthOfCloud, int step,    lvr2::BaseVector<float>* right_wheel, lvr2::BaseVector<float>* left_wheel,lvr2::Matrix4<lvr2::BaseVector<float>> matrixTransform)
         : cloudBuffer(cloudBuffer), heightOfCloud(heightOfCloud), widthOfCloud(widthOfCloud) {
     this->step=step;
-
+    this->matrixTransform= matrixTransform;
     this->right_wheel = right_wheel;
     this->left_wheel= left_wheel;
     setEdgeThreshold(0.5);
@@ -103,8 +103,9 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
         int x=(i/3)%widthOfCloud;
         int y= ((i/3)-x)/widthOfCloud;
         if(x%step==0 && y%step==0) {
-            lvr2::ColorVertex<float, int> point(cloudPoints[i], cloudPoints[i + 2],
-                                                -1*cloudPoints[i + 1]); // point at (x,y)
+
+            lvr2::ColorVertex<float, int> point(cloudPoints[i]*matrixTransform[0]+ cloudPoints[i + 1]*matrixTransform[1]+cloudPoints[i + 2]*matrixTransform[2]+matrixTransform[3],cloudPoints[i]*matrixTransform[4]+ cloudPoints[i + 1]*matrixTransform[5]+cloudPoints[i + 2]*matrixTransform[6]+matrixTransform[7],cloudPoints[i]*matrixTransform[8]+ cloudPoints[i + 1]*matrixTransform[9]+cloudPoints[i + 2]*matrixTransform[10]+matrixTransform[11] ); // point at (x,y)
+
             lvr2::Normal<float> normal;
 
 

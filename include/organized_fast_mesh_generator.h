@@ -57,6 +57,7 @@
 #include <lvr2/display/PointCloud.hpp>
 #include <lvr2/geometry/BaseMesh.hpp>
 #include <mesh_msgs/MeshVertexColorsStamped.h>
+#include <lvr2/geometry/Matrix4.hpp>
 
 
 /**
@@ -77,7 +78,7 @@ class OrganizedFastMeshGenerator {
      * @param phi_inc incremnet per colum
      */
     OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer , uint32_t heightOfCloud,
-                                                           uint32_t widthOfCloud, int step,   lvr2::BaseVector<float>* right_wheel = nullptr, lvr2::BaseVector<float>* left_wheel = nullptr);
+                                                           uint32_t widthOfCloud, int step,   lvr2::BaseVector<float>* right_wheel = nullptr, lvr2::BaseVector<float>* left_wheel = nullptr, lvr2::Matrix4<lvr2::BaseVector<float>> matrixTransform = lvr2::Matrix4<lvr2::BaseVector<float>>());
 
 
 
@@ -184,6 +185,7 @@ class OrganizedFastMeshGenerator {
     lvr2::BaseVector<float>* right_wheel;
     float min_x;
     float max_z;
+    lvr2::Matrix4< lvr2::BaseVector<float>> matrixTransform;
 };
 
 #endif /* organized_fast_mesh_generator.h */
