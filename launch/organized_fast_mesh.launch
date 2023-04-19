@@ -4,7 +4,8 @@
     <remap from="input_cloud" to="assembled_cloud" />
     <param name="edge_threshold" value="0.1"/>
     <param name="fillup_base_hole" value="true"/>
-    <param name="step" value="1"/>
+    <param name="cal_step" value="1"/>
+    <param name="row_step" value="1"/>
 
 
 

@@ -64,9 +64,10 @@
 
 
 OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer , uint32_t heightOfCloud,
-                                                       uint32_t widthOfCloud, int step,    lvr2::BaseVector<float>* right_wheel, lvr2::BaseVector<float>* left_wheel,lvr2::Matrix4<lvr2::BaseVector<float>> matrixTransform)
+                                                       uint32_t widthOfCloud, int row_step, int cal_step  ,  lvr2::BaseVector<float>* right_wheel, lvr2::BaseVector<float>* left_wheel,lvr2::Matrix4<lvr2::BaseVector<float>> matrixTransform)
         : cloudBuffer(cloudBuffer), heightOfCloud(heightOfCloud), widthOfCloud(widthOfCloud) {
-    this->step=step;
+    this->row_step=row_step;
+    this->cal_step=cal_step;
     this->matrixTransform= matrixTransform;
     this->right_wheel = right_wheel;
     this->left_wheel= left_wheel;
@@ -94,15 +95,10 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
     lvr2::floatArr cloudNormals = cloudBuffer.getNormalArray();
     bool hasColor = false;
 
-    int row =0;
-    for (int i = 0; i < cloudBuffer.numPoints() * 3; i += 3*step) {
-        if(row >=widthOfCloud){
-            i=i -(row *3) + (step *3 *widthOfCloud );
-            row =0;
-        }
+    for (int i = 0; i < cloudBuffer.numPoints() * 3; i += 3) {
         int x=(i/3)%widthOfCloud;
         int y= ((i/3)-x)/widthOfCloud;
-        if(x%step==0 && y%step==0) {
+        if(x%cal_step==0 && y%row_step==0) {
 
             lvr2::ColorVertex<float, int> point(cloudPoints[i]*matrixTransform[0]+ cloudPoints[i + 1]*matrixTransform[1]+cloudPoints[i + 2]*matrixTransform[2]+matrixTransform[3],cloudPoints[i]*matrixTransform[4]+ cloudPoints[i + 1]*matrixTransform[5]+cloudPoints[i + 2]*matrixTransform[6]+matrixTransform[7],cloudPoints[i]*matrixTransform[8]+ cloudPoints[i + 1]*matrixTransform[9]+cloudPoints[i + 2]*matrixTransform[10]+matrixTransform[11] ); // point at (x,y)
 
@@ -150,7 +146,6 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             index_map[i/3] = -1;
             index_map_index++;
         }
-        row +=step;
     }
 
     //possible to add possible colors
@@ -171,12 +166,12 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
 
     // start adding faces to the mesh
     std::vector<unsigned int> triangleIndexVec;
-    for (uint32_t y = 0; y < heightOfCloud; y=y+step) {
-        for (uint32_t x = 0; x < widthOfCloud; x=step+x) {
+    for (uint32_t y = 0; y < heightOfCloud; y=y+row_step) {
+        for (uint32_t x = 0; x < widthOfCloud; x=cal_step+x) {
 
             // get indices around the borders for a 360 degree view
-            uint32_t x_right = (x >= widthOfCloud-step) ? 0 : x + step;
-            uint32_t y_bottom = (y >= heightOfCloud-step) ? 0 : y + step;
+            uint32_t x_right = (x >= widthOfCloud-row_step) ? 0 : x + cal_step;
+            uint32_t y_bottom = (y >= heightOfCloud-cal_step) ? 0 : y + row_step;
 
             // get the corresponding indices in the mesh
 
@@ -202,7 +197,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             if (idx != -1 && idx_rb != -1 && idx_r != -1) {
                 // check if there are longer edges then the threshold
                 float distance = sqrt(pow(vecPoint[idx],2)+pow(vecPoint[idx+1],2)+pow(vecPoint[idx+2],2));
-                if (!hasLongEdge(idx, idx_rb, idx_r, sqr_edge_threshold*step)) {
+                if (!hasLongEdge(idx, idx_rb, idx_r, sqr_edge_threshold*(row_step+cal_step)/2)) {
 
 
                     triangleIndexVec.push_back(idx);
@@ -216,7 +211,7 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             if (idx != -1 && idx_b != -1 && idx_rb != -1) {
                 // check if there are longer edges then the threshold
                 float distance = sqrt(pow(vecPoint[idx],2)+pow(vecPoint[idx+1],2)+pow(vecPoint[idx+2],2));
-                if (!hasLongEdge(idx, idx_b, idx_rb, sqr_edge_threshold*step)) {
+                if (!hasLongEdge(idx, idx_b, idx_rb, sqr_edge_threshold*(row_step+cal_step)/2)) {
 
 
                     triangleIndexVec.push_back(idx);

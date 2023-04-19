@@ -78,7 +78,7 @@ class OrganizedFastMeshGenerator {
      * @param phi_inc incremnet per colum
      */
     OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer , uint32_t heightOfCloud,
-                                                           uint32_t widthOfCloud, int step,   lvr2::BaseVector<float>* right_wheel = nullptr, lvr2::BaseVector<float>* left_wheel = nullptr, lvr2::Matrix4<lvr2::BaseVector<float>> matrixTransform = lvr2::Matrix4<lvr2::BaseVector<float>>());
+                                                           uint32_t widthOfCloud, int row_step=1, int cal_step=1 ,   lvr2::BaseVector<float>* right_wheel = nullptr, lvr2::BaseVector<float>* left_wheel = nullptr, lvr2::Matrix4<lvr2::BaseVector<float>> matrixTransform = lvr2::Matrix4<lvr2::BaseVector<float>>());
 
 
 
@@ -179,7 +179,8 @@ class OrganizedFastMeshGenerator {
     //! \threshold value for the longe edge test
     float sqr_edge_threshold;
     size_t index_map_index;
-    int step;
+    int row_step;
+    int cal_step;
 
     lvr2::BaseVector<float>* left_wheel;
     lvr2::BaseVector<float>* right_wheel;

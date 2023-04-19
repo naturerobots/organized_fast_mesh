@@ -77,7 +77,8 @@ private:
             mesh_msgs::MeshGeometryStamped &mesh_msg, mesh_msgs::MeshVertexColorsStamped &color_msg);
 
     double edge_threshold;
-    int step;
+    int row_step;
+    int cal_step;
 
     bool fillup_base_hole;
 };
