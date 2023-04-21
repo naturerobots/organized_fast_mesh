@@ -51,7 +51,6 @@
 #include <mesh_msgs/MeshTriangleIndices.h>
 #include <mesh_msgs/MeshGeometryStamped.h>
 #include <mesh_msgs/MeshVertexColorsStamped.h>
-
 #include <std_msgs/ColorRGBA.h>
 
 class OrganizedFastMesh {

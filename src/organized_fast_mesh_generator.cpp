@@ -63,14 +63,17 @@
 #include "lvr2/attrmaps/AttributeMap.hpp"
 
 
-OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer , uint32_t heightOfCloud,
-                                                       uint32_t widthOfCloud, int row_step, int cal_step  ,  lvr2::BaseVector<float>* right_wheel, lvr2::BaseVector<float>* left_wheel,lvr2::Matrix4<lvr2::BaseVector<float>> matrixTransform)
+OrganizedFastMeshGenerator::OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer, uint32_t heightOfCloud,
+                                                       uint32_t widthOfCloud, int row_step, int cal_step,
+                                                       lvr2::BaseVector<float> *right_wheel,
+                                                       lvr2::BaseVector<float> *left_wheel,
+                                                       lvr2::Matrix4 <lvr2::BaseVector<float>> matrixTransform)
         : cloudBuffer(cloudBuffer), heightOfCloud(heightOfCloud), widthOfCloud(widthOfCloud) {
-    this->row_step=row_step;
-    this->cal_step=cal_step;
-    this->matrixTransform= matrixTransform;
+    this->row_step = row_step;
+    this->cal_step = cal_step;
+    this->matrixTransform = matrixTransform;
     this->right_wheel = right_wheel;
-    this->left_wheel= left_wheel;
+    this->left_wheel = left_wheel;
     setEdgeThreshold(0.5);
 
 }
@@ -96,11 +99,17 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
     bool hasColor = false;
 
     for (int i = 0; i < cloudBuffer.numPoints() * 3; i += 3) {
-        int x=(i/3)%widthOfCloud;
-        int y= ((i/3)-x)/widthOfCloud;
-        if(x%cal_step==0 && y%row_step==0) {
+        int x = (i / 3) % widthOfCloud;
+        int y = ((i / 3) - x) / widthOfCloud;
+        if (x % cal_step == 0 && y % row_step == 0) {
 
-            lvr2::ColorVertex<float, int> point(cloudPoints[i]*matrixTransform[0]+ cloudPoints[i + 1]*matrixTransform[1]+cloudPoints[i + 2]*matrixTransform[2]+matrixTransform[3],cloudPoints[i]*matrixTransform[4]+ cloudPoints[i + 1]*matrixTransform[5]+cloudPoints[i + 2]*matrixTransform[6]+matrixTransform[7],cloudPoints[i]*matrixTransform[8]+ cloudPoints[i + 1]*matrixTransform[9]+cloudPoints[i + 2]*matrixTransform[10]+matrixTransform[11] ); // point at (x,y)
+            lvr2::ColorVertex<float, int> point(
+                    cloudPoints[i] * matrixTransform[0] + cloudPoints[i + 1] * matrixTransform[1] +
+                    cloudPoints[i + 2] * matrixTransform[2] + matrixTransform[3],
+                    cloudPoints[i] * matrixTransform[4] + cloudPoints[i + 1] * matrixTransform[5] +
+                    cloudPoints[i + 2] * matrixTransform[6] + matrixTransform[7],
+                    cloudPoints[i] * matrixTransform[8] + cloudPoints[i + 1] * matrixTransform[9] +
+                    cloudPoints[i + 2] * matrixTransform[10] + matrixTransform[11]); // point at (x,y)
 
             lvr2::Normal<float> normal;
 
@@ -116,14 +125,14 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             if (std::isnan(point.x) || std::isnan(point.y) || std::isnan(point.z) ||
                 point.z == 0 && point.y == 0 && point.x == 0) {
                 // index maps to -1
-                index_map[i/3] = -1;
+                index_map[i / 3] = -1;
                 index_map_index++;
             } else { // if the point exists (not nan)
 
                 if (pointIsPartofMesh(point)) {
 
                     // index maps to existing vertex in the mesh
-                    index_map[i/3] = index_cnt;
+                    index_map[i / 3] = index_cnt;
                     index_map_index++;
                     index_cnt++;
                     vecPoint.push_back(point.x);
@@ -135,15 +144,14 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
 
                     vertices.push_back(point);
                 } else {
-                    index_map[i/3] = -1;
+                    index_map[i / 3] = -1;
                     index_map_index++;
                 }
 
 
             }
-        }
-        else {
-            index_map[i/3] = -1;
+        } else {
+            index_map[i / 3] = -1;
             index_map_index++;
         }
     }
@@ -166,12 +174,12 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
 
     // start adding faces to the mesh
     std::vector<unsigned int> triangleIndexVec;
-    for (uint32_t y = 0; y < heightOfCloud; y=y+row_step) {
-        for (uint32_t x = 0; x < widthOfCloud; x=cal_step+x) {
+    for (uint32_t y = 0; y < heightOfCloud; y = y + row_step) {
+        for (uint32_t x = 0; x < widthOfCloud; x = cal_step + x) {
 
             // get indices around the borders for a 360 degree view
-            uint32_t x_right = (x >= widthOfCloud-row_step) ? 0 : x + cal_step;
-            uint32_t y_bottom = (y >= heightOfCloud-cal_step) ? 0 : y + row_step;
+            uint32_t x_right = (x >= widthOfCloud - row_step) ? 0 : x + cal_step;
+            uint32_t y_bottom = (y >= heightOfCloud - cal_step) ? 0 : y + row_step;
 
             // get the corresponding indices in the mesh
 
@@ -196,8 +204,8 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             // create top triangle if all vertices exists
             if (idx != -1 && idx_rb != -1 && idx_r != -1) {
                 // check if there are longer edges then the threshold
-                float distance = sqrt(pow(vecPoint[idx],2)+pow(vecPoint[idx+1],2)+pow(vecPoint[idx+2],2));
-                if (!hasLongEdge(idx, idx_rb, idx_r, sqr_edge_threshold*(row_step+cal_step)/2)) {
+                float distance = sqrt(pow(vecPoint[idx], 2) + pow(vecPoint[idx + 1], 2) + pow(vecPoint[idx + 2], 2));
+                if (!hasLongEdge(idx, idx_rb, idx_r, sqr_edge_threshold * (row_step + cal_step) / 2)) {
 
 
                     triangleIndexVec.push_back(idx);
@@ -210,8 +218,8 @@ void OrganizedFastMeshGenerator::getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::Mesh
             // create bottom triangle if all vertices exists
             if (idx != -1 && idx_b != -1 && idx_rb != -1) {
                 // check if there are longer edges then the threshold
-                float distance = sqrt(pow(vecPoint[idx],2)+pow(vecPoint[idx+1],2)+pow(vecPoint[idx+2],2));
-                if (!hasLongEdge(idx, idx_b, idx_rb, sqr_edge_threshold*(row_step+cal_step)/2)) {
+                float distance = sqrt(pow(vecPoint[idx], 2) + pow(vecPoint[idx + 1], 2) + pow(vecPoint[idx + 2], 2));
+                if (!hasLongEdge(idx, idx_b, idx_rb, sqr_edge_threshold * (row_step + cal_step) / 2)) {
 
 
                     triangleIndexVec.push_back(idx);
@@ -448,7 +456,6 @@ inline uint32_t OrganizedFastMeshGenerator::toIndex(int x, int y) {
 }
 
 
-
 inline void OrganizedFastMeshGenerator::normalize(int &x, int &y) {
     uint32_t height = heightOfCloud;
     uint32_t width = widthOfCloud;
@@ -573,8 +580,8 @@ void OrganizedFastMeshGenerator::fillContour(std::vector<int> &contour_indices, 
     int num_sub_contours = (int) floor(log2(contour_indices.size()));
 
 
-    std::vector<std::vector<int>> hole_triangles;
-    std::vector<std::vector<int>> hole_indices;
+    std::vector <std::vector<int>> hole_triangles;
+    std::vector <std::vector<int>> hole_indices;
 
     hole_indices.push_back(contour_indices);
     int skip = 1;
@@ -803,17 +810,15 @@ pcl::PointIndices::Ptr in_radius_indices (new pcl::PointIndices);
     mesh.setFaceIndices(newFaceArr, newFaces.size() / 3);
 }
 
-bool OrganizedFastMeshGenerator::pointIsPartofMesh(lvr2::ColorVertex<float, int> point){
-    if(right_wheel == nullptr && left_wheel ==nullptr){
+bool OrganizedFastMeshGenerator::pointIsPartofMesh(lvr2::ColorVertex<float, int> point) {
+    if (right_wheel == nullptr && left_wheel == nullptr) {
         return true;
-    }else{
-        if(right_wheel != nullptr && left_wheel !=nullptr) {
+    } else {
+        if (right_wheel != nullptr && left_wheel != nullptr) {
             return isInsideBox(point, right_wheel) || isInsideBox(point, left_wheel);
-        }
-        else if(right_wheel != nullptr ){
+        } else if (right_wheel != nullptr) {
             return isInsideBox(point, right_wheel);
-        }
-        else if(left_wheel != nullptr ){
+        } else if (left_wheel != nullptr) {
             return isInsideBox(point, left_wheel);
         }
 
@@ -821,7 +826,7 @@ bool OrganizedFastMeshGenerator::pointIsPartofMesh(lvr2::ColorVertex<float, int>
     }
 }
 
-bool OrganizedFastMeshGenerator::isInsideBox(lvr2::BaseVector<float> p, lvr2::BaseVector<float>* vertices) {
+bool OrganizedFastMeshGenerator::isInsideBox(lvr2::BaseVector<float> p, lvr2::BaseVector<float> *vertices) {
     // Berechne die minimalen und maximalen Grenzwerte der Koordinaten des Quaders
     lvr2::BaseVector<float> bMin, bMax;
     bMin.x = bMax.x = vertices[0].x;

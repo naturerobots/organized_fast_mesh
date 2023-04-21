@@ -87,7 +87,7 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
     lvr_ros::fromPointCloud2ToPointBuffer(cloud, pointBuffer);
 
 
-    OrganizedFastMeshGenerator ofmg(pointBuffer, cloud.height, cloud.width,row_step,cal_step);
+    OrganizedFastMeshGenerator ofmg(pointBuffer, cloud.height, cloud.width, row_step, cal_step);
     ofmg.setEdgeThreshold(edge_threshold);
 
 
@@ -137,9 +137,8 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
     if (success) {
         ROS_INFO("Publish organized fast mesh in the %s frame with %d triangles, %d vertices and %d vertex normals",
-                 mesh_msg.header.frame_id.c_str(), mesh_msg.mesh_geometry.faces.size()/3,
+                 mesh_msg.header.frame_id.c_str(), mesh_msg.mesh_geometry.faces.size() / 3,
                  mesh_msg.mesh_geometry.vertices.size(), mesh_msg.mesh_geometry.vertex_normals.size());
-
 
 
         return true;
