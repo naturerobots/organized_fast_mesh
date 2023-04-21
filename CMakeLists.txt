@@ -5,7 +5,6 @@ project(organized_fast_mesh)
 find_package(catkin REQUIRED COMPONENTS
         mesh_msgs
         mesh_msgs_conversions
-        lvr_ros
         roscpp
         rospy
         std_msgs
@@ -49,7 +48,7 @@ generate_messages(
 )
 
 catkin_package(
-        CATKIN_DEPENDS mesh_msgs mesh_msgs_conversions roscpp std_msgs sensor_msgs message_runtime lvr_ros
+        CATKIN_DEPENDS mesh_msgs mesh_msgs_conversions roscpp std_msgs sensor_msgs message_runtime
         INCLUDE_DIRS include
         LIBRARIES organized_fast_mesh
         DEPENDS LVR2
