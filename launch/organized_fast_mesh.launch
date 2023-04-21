@@ -2,11 +2,7 @@
 <launch>
   <node name="organized_fast_mesh" pkg="organized_fast_mesh" type="organized_fast_mesh" output="screen" >
     <remap from="input_cloud" to="assembled_cloud" />
-    <param name="edge_threshold" value="0.5"/>
+    <param name="edge_threshold" value="0.1"/>
     <param name="fillup_base_hole" value="true"/>
-    <param name="cal_step" value="2"/>
-    <param name="row_step" value="2"/>
-
-
   </node>
 </launch>

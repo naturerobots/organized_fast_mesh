@@ -63,16 +63,9 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
     service_ = nh_.advertiseService("organized_fast_mesh", &OrganizedFastMesh::generateOrganizedFastMeshSrv, this);
 
     ros::NodeHandle p_nh_("~");
-    p_nh_.param("edge_threshold", edge_threshold, 0.7);
-    p_nh_.param("row_step", row_step, 1);
+    p_nh_.param("edge_threshold", edge_threshold, 0.5);
     p_nh_.param("cal_step", cal_step, 1);
-    p_nh_.param("left_wheel", row_step, 1);
-    p_nh_.param("min_x", min_x, -std::numeric_limits<float>::infinity());
-    p_nh_.param("max_z", max_z, std::numeric_limits<float>::infinity());
-    this->right_wheel=0.5;
-    this->left_wheel=-0.5;
-    this->delta=0.3;
-
+    p_nh_.param("row_step", row_step, 1);
     //set on true to fill up base holes but this feature isn't working in this version
     p_nh_.param("fillup_base_hole", fillup_base_hole, false);
 
@@ -81,6 +74,8 @@ OrganizedFastMesh::OrganizedFastMesh(ros::NodeHandle &nh)
 bool OrganizedFastMesh::generateOrganizedFastMesh(
         const sensor_msgs::PointCloud2 &cloud, mesh_msgs::MeshGeometryStamped &mesh_msg,
         mesh_msgs::MeshVertexColorsStamped &color_msg) {
+
+
     if (cloud.height < 2) {
         ROS_WARN("Received unorganized point cloud!");
         return false;
@@ -91,12 +86,14 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
     lvr_ros::fromPointCloud2ToPointBuffer(cloud, pointBuffer);
 
-    OrganizedFastMeshGenerator ofmg(pointBuffer, cloud.height, cloud.width,row_step,cal_step,left_wheel,right_wheel,delta,min_x,max_z);
+
+    OrganizedFastMeshGenerator ofmg(pointBuffer, cloud.height, cloud.width, row_step, cal_step);
     ofmg.setEdgeThreshold(edge_threshold);
 
 
     lvr2::MeshBufferPtr mesh_buffer_ptr(new lvr2::MeshBuffer);
     ofmg.getMesh(*mesh_buffer_ptr, color_msg);
+
 
     std::vector<int> contour, fillup_indices;
     //fillup base is not working
@@ -140,8 +137,10 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
 
     if (success) {
         ROS_INFO("Publish organized fast mesh in the %s frame with %d triangles, %d vertices and %d vertex normals",
-                 mesh_msg.header.frame_id.c_str(), mesh_msg.mesh_geometry.faces.size(),
+                 mesh_msg.header.frame_id.c_str(), mesh_msg.mesh_geometry.faces.size() / 3,
                  mesh_msg.mesh_geometry.vertices.size(), mesh_msg.mesh_geometry.vertex_normals.size());
+
+
         return true;
     } else {
         ROS_ERROR(

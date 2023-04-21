@@ -51,7 +51,6 @@
 #include <mesh_msgs/MeshTriangleIndices.h>
 #include <mesh_msgs/MeshGeometryStamped.h>
 #include <mesh_msgs/MeshVertexColorsStamped.h>
-
 #include <std_msgs/ColorRGBA.h>
 
 class OrganizedFastMesh {
@@ -77,15 +76,10 @@ private:
             mesh_msgs::MeshGeometryStamped &mesh_msg, mesh_msgs::MeshVertexColorsStamped &color_msg);
 
     double edge_threshold;
-    int cal_step;
     int row_step;
-    bool fillup_base_hole;
-    float left_wheel;
-    float right_wheel;
-    float delta;
-    float min_x;
-    float max_z;
+    int cal_step;
 
+    bool fillup_base_hole;
 };
 
 #endif /* organized_fast_mesh.h */

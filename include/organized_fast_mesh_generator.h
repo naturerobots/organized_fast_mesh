@@ -57,6 +57,7 @@
 #include <lvr2/display/PointCloud.hpp>
 #include <lvr2/geometry/BaseMesh.hpp>
 #include <mesh_msgs/MeshVertexColorsStamped.h>
+#include <lvr2/geometry/Matrix4.hpp>
 
 
 /**
@@ -76,10 +77,12 @@ class OrganizedFastMeshGenerator {
      * @param phi_start_of_cloud phi of the first colum
      * @param phi_inc incremnet per colum
      */
-    OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer, uint32_t heightOfCloud,
-            uint32_t widthOfCloud, int rowstep =1, int calstep =1,float left_wheel =0,float right_wheel =0, float delta =0, float min_x =-std::numeric_limits<float>::infinity(), float max_z =  std::numeric_limits<float>::infinity());
-
-
+    OrganizedFastMeshGenerator(lvr2::PointBuffer &cloudBuffer , uint32_t heightOfCloud,
+                                                           uint32_t widthOfCloud, int row_step=1, int cal_step=1 ,   lvr2::BaseVector<float>* right_wheel = nullptr, lvr2::BaseVector<float>* left_wheel = nullptr, lvr2::Matrix4<lvr2::BaseVector<float>> matrixTransform = lvr2::Matrix4<lvr2::BaseVector<float>>());
+    /**
+     * \brief generates the organized fast mesh
+     * \param a reference to the mesh to fill with the data
+     */
 
 
     void getMesh(lvr2::MeshBuffer &mesh, mesh_msgs::MeshVertexColorsStamped &color_msg);
@@ -88,12 +91,12 @@ class OrganizedFastMeshGenerator {
      * \brief sets the maximum edge length to filter big leaps in the 3D depth data
      */
     void setEdgeThreshold(float dist);
-
+    // NOT WORKING
     bool getContour(std::vector<int> &contour_indices);
-
+    // NOT WORKING
     void fillContour(std::vector<int> &contour_indices, lvr2::MeshBuffer &mesh, std::vector<int> &fillup_indices);
 
-      //! \map old indices to new indices, invalid indices are -1
+    //! \map old indices to new indices, invalid indices are -1
     std::map<int, int> index_map;
 
         /**
@@ -113,13 +116,20 @@ class OrganizedFastMeshGenerator {
     }
 
     private:
-
-    void normalize(int &x, int &y);
     /**
-     * \brief checks if the given normal exists
-     * \param normal The normal to check for existence
-     * \return true if all coords are not nan
+     * checks if a point p is inside the square of the vertices
+     * @param p
+     * @param vertices
+     * @return true if point p is inside the square
      */
+   bool isInsideBox(lvr2::BaseVector<float> p, lvr2::BaseVector<float>* vertices);
+
+   void normalize(int &x, int &y);
+   /**
+    * \brief checks if the given normal exists
+    * \param normal The normal to check for existence
+    * \return true if all coords are not nan
+    */
     bool normalExists(lvr2::Normal<float> &normal);
 
     /**
@@ -137,27 +147,28 @@ class OrganizedFastMeshGenerator {
     bool inBounds(int x, int y);
 
     /**
-     * adds the points and normals of the mesh in to the pointVec and normalVec
-     * @param mes
+     * for easier handling the arrays this function puts the normals and points
+     * of a mesh in to a std::vector
+     * @param mesh
      * @param pointVec
      * @param normalVec
      */
-    void lvr2MeshtoStdVector(lvr2::MeshBuffer &mes, std::vector<float> &pointVec, std::vector<float> &normalVec);
+    void lvr2MeshtoStdVector(lvr2::MeshBuffer &mesh, std::vector<float> &pointVec, std::vector<float> &normalVec);
 
     /**
-     * adds the points and normals from the mesh in std::vec for a easier handling of the arrays
+     * adds the points and normals from a std::vector in mesh
      * @param mes
      * @param pointVec
      * @param normalVec
      */
-    void putStdVectorInMesh(lvr2::MeshBuffer &mes, std::vector<float> &pointVec, std::vector<float> &normalVec);
+    void putStdVectorInMesh(lvr2::MeshBuffer &mesh, std::vector<float> &pointVec, std::vector<float> &normalVec);
 
     /**
      * add faces from a std:vec to the mesh
      * @param mesh
      * @param faceVec
      */
-    void adFacetoMeshBuffer(lvr2::MeshBuffer &mes, std::vector<int> faceVec);
+    void adFacetoMeshBuffer(lvr2::MeshBuffer &mesh, std::vector<int> faceVec);
     /**
      * check if the point pass the conditions
      * @param point point to check
@@ -176,14 +187,18 @@ class OrganizedFastMeshGenerator {
     std::vector <lvr2::ColorVertex<float, int>> vertices;
     //! \threshold value for the longe edge test
     float sqr_edge_threshold;
+    //! \map old indices to new indices, invalid indices are -1
     size_t index_map_index;
+    //! \stepsize in rowdirection
     int row_step;
+    //! \stepsize in caldirection
     int cal_step;
-    float left_wheel;
-    float right_wheel;
-    float delta;
-    float min_x;
-    float max_z;
+    //! \holds squres how define a squre of interesst, only if a point is inside of a squre the point will add to the mesh
+    //! \ if each point is to be added, both points are nullptr
+    lvr2::BaseVector<float>* left_wheel;
+    lvr2::BaseVector<float>* right_wheel;
+    //! \holds the matrix for a transformation in a desired coordinate system
+    lvr2::Matrix4< lvr2::BaseVector<float>> matrixTransform;
 };
 
 #endif /* organized_fast_mesh_generator.h */
