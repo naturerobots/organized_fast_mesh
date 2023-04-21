@@ -50,9 +50,9 @@
 #include <vector>
 #include <cmath>
 
-#include <pcl-1.10/pcl/search/kdtree.h>
+
 #include <lvr2/registration/KDTree.hpp>
-#include <pcl-1.10/pcl/surface/marching_cubes_rbf.h>
+
 
 #include <lvr2/reconstruction/SearchTreeFlann.hpp>
 #include <lvr2/algorithm/ClusterAlgorithms.hpp>
