@@ -47,7 +47,7 @@
 #include <lvr2/geometry/BaseVector.hpp>
 #include <lvr2/geometry/HalfEdgeMesh.hpp>
 #include <lvr2/geometry/ColorVertex.hpp>
-#include <lvr_ros/conversions.h>
+
 
 
 typedef lvr2::ColorVertex<float, int> VertexType;
@@ -84,7 +84,7 @@ bool OrganizedFastMesh::generateOrganizedFastMesh(
     //convert from ROS to LVR2
     lvr2::PointBuffer pointBuffer;
 
-    lvr_ros::fromPointCloud2ToPointBuffer(cloud, pointBuffer);
+    mesh_msgs_conversions::fromPointCloud2ToPointBuffer(cloud, pointBuffer);
 
 
     OrganizedFastMeshGenerator ofmg(pointBuffer, cloud.height, cloud.width, row_step, cal_step);
