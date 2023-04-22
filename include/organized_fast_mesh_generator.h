@@ -63,7 +63,6 @@
 /**
  * \brief Generates an organized fast mesh out of an organized point cloud
  */
-//#TODO delete MeshGenarator
 class OrganizedFastMeshGenerator {
     public:
 
